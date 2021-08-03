@@ -29,4 +29,11 @@ runs:
   using: 'docker'
   image: 'Dockerfile'
   args:
-    - "validate --token ${{ inputs.token }} --job ${{ inputs.job }} --interval ${{ inputs.interval }} --owner ${{ inputs.owner }} --repo ${{ inputs.repo }} --ref ${{ inputs.ref }} --timeout ${{ inputs.timeout }}"
+    - "validate"
+    - "--token=${{ inputs.token }}"
+    - "--job=${{ inputs.job }}"
+    - "--interval=${{ inputs.interval }}"
+    - "--owner=${{ inputs.owner }}"
+    - "--repo=${{ inputs.repo }}"
+    - "--ref=${{ inputs.ref }}"
+    - "--timeout=${{ inputs.timeout }}"
