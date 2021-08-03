@@ -7,7 +7,7 @@ inputs:
   job:
     description: 'set target job'
     required: false
-    default: "jobkeeper"
+    default: "check-other-job-status"
   interval:
     description: 'set validate interval second (default 120)'
     required: false

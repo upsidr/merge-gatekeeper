@@ -27,7 +27,7 @@ var (
 func validateCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "validate",
-		Short: "Validate github actions job",
+		Short: "Validate other github actions job",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 
