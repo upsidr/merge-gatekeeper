@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// Tease variables will be set by command line flags.
+// These variables will be set by command line flags.
 var (
 	ghToken string
 )

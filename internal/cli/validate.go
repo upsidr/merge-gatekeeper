@@ -14,7 +14,7 @@ import (
 
 const defaultJobName = "check-other-job-status"
 
-// Tease variables will be set by command line flags.
+// These variables will be set by command line flags.
 var (
 	ghOwner             string
 	ghRepo              string
@@ -70,7 +70,7 @@ func doValidateCmd(ctx context.Context, logger logger, vs ...validators.Validato
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-timeoutT.C:
-			return errors.New("validation is timeout")
+			return errors.New("validation timed out")
 		case <-invalT.C:
 			var successCnt int
 			for _, validator := range vs {
