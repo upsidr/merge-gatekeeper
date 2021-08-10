@@ -81,9 +81,8 @@ func doValidateCmd(ctx context.Context, logger logger, vs ...validators.Validato
 					}
 					logger.PrintErrln(err)
 					break
-				} else {
-					successCnt++
 				}
+				successCnt++
 			}
 			if successCnt == len(vs) {
 				return nil
