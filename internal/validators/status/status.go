@@ -52,7 +52,7 @@ func (sv *statusValidator) Validate(ctx context.Context) error {
 		return err
 	}
 
-	// When there is no job other than the target job.
+	// When there is no other job than this validation job.
 	if len(statuses) <= 1 {
 		return nil
 	}
