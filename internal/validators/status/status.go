@@ -2,6 +2,7 @@ package status
 
 import (
 	"context"
+	"errors"
 
 	"github.com/upsidr/check-other-job-status/internal/github"
 	"github.com/upsidr/check-other-job-status/internal/validators"
@@ -28,7 +29,6 @@ type contextStatus struct {
 }
 
 type statusValidator struct {
-	token         string
 	repo          string
 	owner         string
 	ref           string
@@ -36,14 +36,42 @@ type statusValidator struct {
 	client        github.Client
 }
 
-func CreateValidator(c github.Client, opts ...Option) validators.Validator {
+func CreateValidator(c github.Client, opts ...Option) (validators.Validator, error) {
 	sv := &statusValidator{
 		client: c,
 	}
 	for _, opt := range opts {
 		opt(sv)
 	}
-	return sv
+	if err := sv.validateFields(); err != nil {
+		return nil, err
+	}
+	return sv, nil
+}
+
+func (sv *statusValidator) validateFields() error {
+	errs := make(errs, 0, 6)
+
+	if len(sv.repo) == 0 {
+		errs = append(errs, errors.New("repository name is empty"))
+	}
+	if len(sv.owner) == 0 {
+		errs = append(errs, errors.New("repository owner is empty"))
+	}
+	if len(sv.ref) == 0 {
+		errs = append(errs, errors.New("reference of repository is empty"))
+	}
+	if len(sv.targetJobName) == 0 {
+		errs = append(errs, errors.New("target job name is empty"))
+	}
+	if sv.client == nil {
+		errs = append(errs, errors.New("github client is empty"))
+	}
+	if len(errs) != 0 {
+		return errs
+	}
+
+	return nil
 }
 
 func (sv *statusValidator) Validate(ctx context.Context) error {

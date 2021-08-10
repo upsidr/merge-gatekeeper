@@ -31,11 +31,14 @@ func validateCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 
-			statusValidator := status.CreateValidator(github.NewClient(ctx, ghToken),
+			statusValidator, err := status.CreateValidator(github.NewClient(ctx, ghToken),
 				status.WithTargetJob(targetJobName),
 				status.WithGitHubOwnerAndRepo(ghOwner, ghRepo),
 				status.WithGitHubRef(ghRef),
 			)
+			if err != nil {
+				return err
+			}
 			return doValidateCmd(ctx, cmd, statusValidator)
 		},
 	}

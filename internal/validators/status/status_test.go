@@ -21,8 +21,9 @@ func TestCreateValidator(t *testing.T) {
 		opts []Option
 	}
 	type test struct {
-		args args
-		want validators.Validator
+		args    args
+		want    validators.Validator
+		wantErr bool
 	}
 	tests := map[string]test{
 		"returns Validator when option is empty": func() test {
@@ -31,9 +32,8 @@ func TestCreateValidator(t *testing.T) {
 				args: args{
 					c: c,
 				},
-				want: &statusValidator{
-					client: c,
-				},
+				want:    nil,
+				wantErr: true,
 			}
 		}(),
 		"returns Validator when option is not empty": func() test {
@@ -54,6 +54,7 @@ func TestCreateValidator(t *testing.T) {
 					ref:           "sha",
 					targetJobName: "job",
 				},
+				wantErr: false,
 			}
 		}(),
 		"returns Validator when there are duplicate options": func() test {
@@ -76,12 +77,18 @@ func TestCreateValidator(t *testing.T) {
 					ref:           "sha-01",
 					targetJobName: "job-01",
 				},
+				wantErr: false,
 			}
 		}(),
 	}
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			if got := CreateValidator(tt.args.c, tt.args.opts...); !reflect.DeepEqual(got, tt.want) {
+			got, err := CreateValidator(tt.args.c, tt.args.opts...)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("CreateValidator error = %v, wantErr: %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("CreateValidator() = %v, want %v", got, tt.want)
 			}
 		})
@@ -248,7 +255,6 @@ func Test_statusValidator_Validate(t *testing.T) {
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
 			sv := &statusValidator{
-				token:         tt.fields.token,
 				repo:          tt.fields.repo,
 				owner:         tt.fields.owner,
 				ref:           tt.fields.ref,
@@ -392,7 +398,6 @@ func Test_statusValidator_listStatues(t *testing.T) {
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
 			sv := &statusValidator{
-				token:         tt.fields.token,
 				repo:          tt.fields.repo,
 				owner:         tt.fields.owner,
 				ref:           tt.fields.ref,
