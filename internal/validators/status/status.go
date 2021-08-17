@@ -12,7 +12,7 @@ func (s *status) Detail() string {
 	return fmt.Sprintf(
 		`total job count: %d
 jobs: %v
-completed job count: %d 
+completed job count: %d
 jobs: %v`,
 		len(s.totalJobs), s.totalJobs,
 		len(s.completeJobs), s.completeJobs,
