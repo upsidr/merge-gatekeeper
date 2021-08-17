@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/upsidr/check-other-job-status/internal/validators"
-	mockvalidators "github.com/upsidr/check-other-job-status/internal/validators/mock"
+	"github.com/upsidr/check-other-job-status/internal/validators/mock"
 )
 
 func TestMain(m *testing.M) {
@@ -29,19 +29,19 @@ func Test_doValidateCmd(t *testing.T) {
 			ctx: context.Background(),
 			cmd: &cobra.Command{},
 			vs: []validators.Validator{
-				&mockvalidators.Validator{
+				&mock.Validator{
 					NameFunc: func() string { return "validator-1" },
 					ValidateFunc: func(ctx context.Context) (validators.Status, error) {
-						return &mockvalidators.Status{
+						return &mock.Status{
 							DetailFunc:    func() string { return "success-1" },
 							IsSuccessFunc: func() bool { return true },
 						}, nil
 					},
 				},
-				&mockvalidators.Validator{
+				&mock.Validator{
 					NameFunc: func() string { return "validator-2" },
 					ValidateFunc: func(ctx context.Context) (validators.Status, error) {
-						return &mockvalidators.Status{
+						return &mock.Status{
 							DetailFunc:    func() string { return "success-2" },
 							IsSuccessFunc: func() bool { return true },
 						}, nil
@@ -54,19 +54,19 @@ func Test_doValidateCmd(t *testing.T) {
 			ctx: context.Background(),
 			cmd: &cobra.Command{},
 			vs: []validators.Validator{
-				&mockvalidators.Validator{
+				&mock.Validator{
 					NameFunc: func() string { return "validator-1" },
 					ValidateFunc: func(ctx context.Context) (validators.Status, error) {
-						return &mockvalidators.Status{
+						return &mock.Status{
 							DetailFunc:    func() string { return "fails-1" },
 							IsSuccessFunc: func() bool { return false },
 						}, nil
 					},
 				},
-				&mockvalidators.Validator{
+				&mock.Validator{
 					NameFunc: func() string { return "validator-2" },
 					ValidateFunc: func(ctx context.Context) (validators.Status, error) {
-						return &mockvalidators.Status{
+						return &mock.Status{
 							DetailFunc:    func() string { return "fails-2" },
 							IsSuccessFunc: func() bool { return false },
 						}, nil
@@ -79,7 +79,7 @@ func Test_doValidateCmd(t *testing.T) {
 			ctx: context.Background(),
 			cmd: &cobra.Command{},
 			vs: []validators.Validator{
-				&mockvalidators.Validator{
+				&mock.Validator{
 					NameFunc: func() string { return "validator-1" },
 					ValidateFunc: func(ctx context.Context) (validators.Status, error) {
 						return nil, errors.New("err")
