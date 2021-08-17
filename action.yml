@@ -12,6 +12,10 @@ inputs:
     description: 'set validate interval second (default 120)'
     required: false
     default: "120"
+  timeout:
+    description: 'set validate timeout second (default 600)'
+    required: false
+    default: "600"
   owner:
     description: 'set owner of github repository'
     required: true
@@ -21,10 +25,6 @@ inputs:
   ref:
     description: 'set ref of github repository. the ref can be a SHA, a branch name, or tag name'
     required: true
-  timeout:
-    description: 'set validate timeout second (default 600)'
-    required: false
-    default: "600"
 runs:
   using: 'docker'
   image: 'Dockerfile'
