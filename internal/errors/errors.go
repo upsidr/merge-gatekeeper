@@ -1,13 +1,13 @@
-package main
+package errors
 
 import (
 	"errors"
 	"fmt"
 )
 
-type errs []error
+type Errors []error
 
-func (es errs) Error() string {
+func (es Errors) Error() string {
 	switch len(es) {
 	case 0:
 		return ""
@@ -24,7 +24,7 @@ func (es errs) Error() string {
 	return rt
 }
 
-func (es errs) Is(target error) bool {
+func (es Errors) Is(target error) bool {
 	if len(es) == 0 {
 		return false
 	}

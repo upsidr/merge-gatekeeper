@@ -3,6 +3,7 @@ package cli
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -37,7 +38,7 @@ func validateCmd() *cobra.Command {
 				status.WithGitHubRef(ghRef),
 			)
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to create validator: %w", err)
 			}
 			return doValidateCmd(ctx, cmd, statusValidator)
 		},
@@ -61,12 +62,21 @@ func validateCmd() *cobra.Command {
 	return cmd
 }
 
+func debug(logger logger, name string) func() {
+	logger.Printf("start %s processing....\n", name)
+	return func() {
+		logger.Printf("finish %s processing\n", name)
+	}
+}
+
 func doValidateCmd(ctx context.Context, logger logger, vs ...validators.Validator) error {
 	timeoutT := time.NewTicker(time.Duration(timeoutSecond) * time.Second)
 	defer timeoutT.Stop()
 
 	invalT := time.NewTicker(time.Duration(validateInvalSecond) * time.Second)
 	defer invalT.Stop()
+
+	defer debug(logger, "validation loop")()
 
 	for {
 		select {
@@ -76,20 +86,25 @@ func doValidateCmd(ctx context.Context, logger logger, vs ...validators.Validato
 			return errors.New("validation timed out")
 		case <-invalT.C:
 			var successCnt int
-			for _, validator := range vs {
-				err := validator.Validate(ctx)
+			for _, v := range vs {
+				endfn := debug(logger, "validator: "+v.Name())
+
+				st, err := v.Validate(ctx)
 				if err != nil {
-					if !errors.Is(err, validators.ErrValidate) {
-						return err
-					}
-					logger.PrintErrln(err)
-					break
+					return fmt.Errorf("error occurs\tvalidator: %s, err: %v", v.Name(), err)
 				}
-				successCnt++
+
+				logger.Println(st.Detail())
+				if st.IsSuccess() {
+					successCnt++
+				}
+				endfn()
 			}
 			if successCnt == len(vs) {
+				logger.Println("all validations successful")
 				return nil
 			}
+			logger.PrintErrln("validation failed")
 		}
 	}
 }

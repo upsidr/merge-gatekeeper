@@ -9,6 +9,12 @@ var (
 	ErrValidate = errors.New("validate error")
 )
 
+type Status interface {
+	Detail() string
+	IsSuccess() bool
+}
+
 type Validator interface {
-	Validate(ctx context.Context) error
+	Name() string
+	Validate(ctx context.Context) (Status, error)
 }
