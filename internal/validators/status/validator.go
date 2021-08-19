@@ -149,22 +149,22 @@ func (sv *statusValidator) listGhaStatuses(ctx context.Context) ([]*ghaStatus, e
 		if run.Name == nil || run.Status == nil {
 			continue
 		}
-		contextStatus := &ghaStatus{
+		ghaStatus := &ghaStatus{
 			Context: *run.Name,
 		}
 		if *run.Status != checkRunCompletedStatus {
-			contextStatus.State = pendingState
-			ghaStatuses = append(ghaStatuses, contextStatus)
+			ghaStatus.State = pendingState
+			ghaStatuses = append(ghaStatuses, ghaStatus)
 			continue
 		}
 
 		switch *run.Conclusion {
 		case checkRunNeutralConclusion, checkRunSuccessConclusion:
-			contextStatus.State = successState
+			ghaStatus.State = successState
 		default:
-			contextStatus.State = errorState
+			ghaStatus.State = errorState
 		}
-		ghaStatuses = append(ghaStatuses, contextStatus)
+		ghaStatuses = append(ghaStatuses, ghaStatus)
 	}
 
 	return ghaStatuses, nil
