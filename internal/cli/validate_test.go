@@ -18,6 +18,52 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
+func Test_ownerAndRepository(t *testing.T) {
+	tests := map[string]struct {
+		str       string
+		wantOwner string
+		wantRepo  string
+	}{
+		"returns empty when str is empty": {
+			str:       "",
+			wantOwner: "",
+			wantRepo:  "",
+		},
+		"returns (upsidr, repo) when str is upsidr/repo": {
+			str:       "upsidr/repo",
+			wantOwner: "upsidr",
+			wantRepo:  "repo",
+		},
+		"returns (upsidr, '') when str is upsidr": {
+			str:       "upsidr",
+			wantOwner: "upsidr",
+			wantRepo:  "",
+		},
+		"returns ('', repo) when str is /repo": {
+			str:       "/repo",
+			wantOwner: "",
+			wantRepo:  "repo",
+		},
+		"returns (upsidr, repo/repo) when str is upsidr/repo/repo": {
+			str:       "upsidr/repo/repo",
+			wantOwner: "upsidr",
+			wantRepo:  "repo/repo",
+		},
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			gotOwner, gotRepo := ownerAndRepository(tt.str)
+			if gotOwner != tt.wantOwner {
+				t.Errorf("ownerAndRepository() owner = %s, wantOwner: %s", gotOwner, tt.wantOwner)
+			}
+			if gotRepo != tt.wantRepo {
+				t.Errorf("ownerAndRepository() repo = %s, wantOwner: %s", gotRepo, tt.wantRepo)
+			}
+		})
+	}
+}
+
 func Test_doValidateCmd(t *testing.T) {
 	tests := map[string]struct {
 		ctx     context.Context

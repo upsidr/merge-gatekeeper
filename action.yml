@@ -16,15 +16,10 @@ inputs:
     description: 'set validate timeout second (default 600)'
     required: false
     default: "600"
-  owner:
-    description: 'set owner of github repository'
-    required: true
-  repo:
-    description: 'set github repository'
-    required: true
   ref:
     description: 'set ref of github repository. the ref can be a SHA, a branch name, or tag name'
-    required: true
+    required: false
+    default: "{{ $GITHUB_HEAD_REF }}"
 runs:
   using: 'docker'
   image: 'Dockerfile'
@@ -33,7 +28,6 @@ runs:
     - "--token=${{ inputs.token }}"
     - "--job=${{ inputs.job }}"
     - "--interval=${{ inputs.interval }}"
-    - "--owner=${{ inputs.owner }}"
-    - "--repo=${{ inputs.repo }}"
+    - "--repo=${{ $GITHUB_REPOSITORY }}"
     - "--ref=${{ inputs.ref }}"
     - "--timeout=${{ inputs.timeout }}"
