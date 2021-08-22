@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -29,6 +30,12 @@ func validateCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "validate",
 		Short: "Validate other github actions job",
+		PreRun: func(cmd *cobra.Command, args []string) {
+			str := os.Getenv("GITHUB_REPOSITORY")
+			if len(str) != 0 {
+				ghRepo = str
+			}
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 
