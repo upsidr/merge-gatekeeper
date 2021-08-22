@@ -333,24 +333,24 @@ func Test_statusValidator_listStatues(t *testing.T) {
 				wantErr: false,
 				want: []*ghaStatus{
 					{
-						Context: "job-01",
-						State:   successState,
+						Job:   "job-01",
+						State: successState,
 					},
 					{
-						Context: "job-02",
-						State:   pendingState,
+						Job:   "job-02",
+						State: pendingState,
 					},
 					{
-						Context: "job-03",
-						State:   successState,
+						Job:   "job-03",
+						State: successState,
 					},
 					{
-						Context: "job-04",
-						State:   successState,
+						Job:   "job-04",
+						State: successState,
 					},
 					{
-						Context: "job-05",
-						State:   errorState,
+						Job:   "job-05",
+						State: errorState,
 					},
 				},
 			}

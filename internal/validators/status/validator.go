@@ -29,8 +29,8 @@ const (
 )
 
 type ghaStatus struct {
-	Context string
-	State   string
+	Job   string
+	State string
 }
 
 type statusValidator struct {
@@ -102,16 +102,16 @@ func (sv *statusValidator) Validate(ctx context.Context) (validators.Status, err
 
 	// When there is no job than this validation job.
 	case 1:
-		st.totalJobs = append(st.totalJobs, ghaStatuses[0].Context)
+		st.totalJobs = append(st.totalJobs, ghaStatuses[0].Job)
 		return st, nil
 	}
 
 	var successCnt int
 	for _, ghaStatus := range ghaStatuses {
-		st.totalJobs = append(st.totalJobs, ghaStatus.Context)
+		st.totalJobs = append(st.totalJobs, ghaStatus.Job)
 
-		if ghaStatus.Context != sv.targetJobName && ghaStatus.State == successState {
-			st.completeJobs = append(st.completeJobs, ghaStatus.Context)
+		if ghaStatus.Job != sv.targetJobName && ghaStatus.State == successState {
+			st.completeJobs = append(st.completeJobs, ghaStatus.Job)
 			successCnt++
 		}
 	}
@@ -135,8 +135,8 @@ func (sv *statusValidator) listGhaStatuses(ctx context.Context) ([]*ghaStatus, e
 			continue
 		}
 		ghaStatuses = append(ghaStatuses, &ghaStatus{
-			Context: *s.Context,
-			State:   *s.State,
+			Job:   *s.Context,
+			State: *s.State,
 		})
 	}
 
@@ -150,7 +150,7 @@ func (sv *statusValidator) listGhaStatuses(ctx context.Context) ([]*ghaStatus, e
 			continue
 		}
 		ghaStatus := &ghaStatus{
-			Context: *run.Name,
+			Job: *run.Name,
 		}
 		if *run.Status != checkRunCompletedStatus {
 			ghaStatus.State = pendingState
