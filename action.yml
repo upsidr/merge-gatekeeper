@@ -4,6 +4,7 @@ inputs:
   token:
     description: 'set github token'
     required: true
+    default: ${{ secrets.GITHUB_TOKEN }}
   job:
     description: 'set target job'
     required: false

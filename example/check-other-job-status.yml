@@ -1,0 +1,14 @@
+name: "Check other job status"
+
+on:
+  pull_request:
+    branches:
+      - main
+      - master
+
+jobs:
+  check-other-job-status:
+    runs-on: ubuntu-latest
+    name: check-other-job-status
+    steps:
+      - uses: upsidr/check-other-job-status@main
