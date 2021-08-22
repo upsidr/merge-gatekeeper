@@ -3,6 +3,7 @@ package status
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/upsidr/check-other-job-status/internal/github"
 	"github.com/upsidr/check-other-job-status/internal/multierror"
@@ -26,6 +27,11 @@ const (
 
 const (
 	validatorName = "check-other-job-status"
+)
+
+var (
+	ErrInvalidCombinedStatusResponse = errors.New("github combined status response is invalid")
+	ErrInvalidCheckRunResponse       = errors.New("github checkRun response is invalid")
 )
 
 type ghaStatus struct {
@@ -132,7 +138,7 @@ func (sv *statusValidator) listGhaStatuses(ctx context.Context) ([]*ghaStatus, e
 	ghaStatuses := make([]*ghaStatus, 0, len(combined.Statuses))
 	for _, s := range combined.Statuses {
 		if s.Context == nil || s.State == nil {
-			continue
+			return nil, fmt.Errorf("%w context: %v, status: %v", ErrInvalidCombinedStatusResponse, s.Context, s.State)
 		}
 		ghaStatuses = append(ghaStatuses, &ghaStatus{
 			Job:   *s.Context,
@@ -147,7 +153,7 @@ func (sv *statusValidator) listGhaStatuses(ctx context.Context) ([]*ghaStatus, e
 
 	for _, run := range runResult.CheckRuns {
 		if run.Name == nil || run.Status == nil {
-			continue
+			return nil, fmt.Errorf("%w name: %v, status: %v", ErrInvalidCheckRunResponse, run.Name, run.Status)
 		}
 		ghaStatus := &ghaStatus{
 			Job: *run.Name,

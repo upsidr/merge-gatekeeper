@@ -262,6 +262,27 @@ func Test_statusValidator_listStatues(t *testing.T) {
 				wantErr: true,
 			}
 		}(),
+		"returns error when the GetCombinedStatus response is invalid": func() test {
+			c := &mock.Client{
+				GetCombinedStatusFunc: func(ctx context.Context, owner, repo, ref string, opts *github.ListOptions) (*github.CombinedStatus, *github.Response, error) {
+					return &github.CombinedStatus{
+						Statuses: []github.RepoStatus{
+							{},
+						},
+					}, nil, nil
+				},
+			}
+			return test{
+				fields: fields{
+					client:        c,
+					targetJobName: "target-job",
+					owner:         "test-owner",
+					repo:          "test-repo",
+					ref:           "main",
+				},
+				wantErr: true,
+			}
+		}(),
 		"returns error when the ListCheckRunsForRef returns an error": func() test {
 			c := &mock.Client{
 				GetCombinedStatusFunc: func(ctx context.Context, owner, repo, ref string, opts *github.ListOptions) (*github.CombinedStatus, *github.Response, error) {
@@ -282,12 +303,35 @@ func Test_statusValidator_listStatues(t *testing.T) {
 				wantErr: true,
 			}
 		}(),
+		"returns error when the ListCheckRunsForRef response is invalid": func() test {
+			c := &mock.Client{
+				GetCombinedStatusFunc: func(ctx context.Context, owner, repo, ref string, opts *github.ListOptions) (*github.CombinedStatus, *github.Response, error) {
+					return &github.CombinedStatus{}, nil, nil
+				},
+				ListCheckRunsForRefFunc: func(ctx context.Context, owner, repo, ref string, opts *github.ListCheckRunsOptions) (*github.ListCheckRunsResults, *github.Response, error) {
+					return &github.ListCheckRunsResults{
+						CheckRuns: []*github.CheckRun{
+							{},
+						},
+					}, nil, nil
+				},
+			}
+			return test{
+				fields: fields{
+					client:        c,
+					targetJobName: "target-job",
+					owner:         "test-owner",
+					repo:          "test-repo",
+					ref:           "main",
+				},
+				wantErr: true,
+			}
+		}(),
 		"returns nil when no error occurs": func() test {
 			c := &mock.Client{
 				GetCombinedStatusFunc: func(ctx context.Context, owner, repo, ref string, opts *github.ListOptions) (*github.CombinedStatus, *github.Response, error) {
 					return &github.CombinedStatus{
 						Statuses: []github.RepoStatus{
-							{},
 							{
 								Context: stringPtr("job-01"),
 								State:   stringPtr(successState),
@@ -298,7 +342,6 @@ func Test_statusValidator_listStatues(t *testing.T) {
 				ListCheckRunsForRefFunc: func(ctx context.Context, owner, repo, ref string, opts *github.ListCheckRunsOptions) (*github.ListCheckRunsResults, *github.Response, error) {
 					return &github.ListCheckRunsResults{
 						CheckRuns: []*github.CheckRun{
-							{},
 							{
 								Name:   stringPtr("job-02"),
 								Status: stringPtr("failure"),
