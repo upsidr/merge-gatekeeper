@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
-	ierrors "github.com/upsidr/check-other-job-status/internal/errors"
 	"github.com/upsidr/check-other-job-status/internal/github"
+	"github.com/upsidr/check-other-job-status/internal/multierror"
 	"github.com/upsidr/check-other-job-status/internal/validators"
 )
 
@@ -59,7 +59,7 @@ func (sv *statusValidator) Name() string {
 }
 
 func (sv *statusValidator) validateFields() error {
-	errs := make(ierrors.Errors, 0, 6)
+	errs := make(multierror.Errors, 0, 6)
 
 	if len(sv.repo) == 0 {
 		errs = append(errs, errors.New("repository name is empty"))
