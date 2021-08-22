@@ -94,7 +94,7 @@ func Test_statusValidator_Validate(t *testing.T) {
 			wantErr:    true,
 			wantStatus: nil,
 		},
-		"returns nil when there is no job": {
+		"returns succeeded status and nil when there is no job": {
 			client: &mock.Client{
 				GetCombinedStatusFunc: func(ctx context.Context, owner, repo, ref string, opts *github.ListOptions) (*github.CombinedStatus, *github.Response, error) {
 					return &github.CombinedStatus{}, nil, nil
@@ -110,7 +110,7 @@ func Test_statusValidator_Validate(t *testing.T) {
 				completeJobs: []string{},
 			},
 		},
-		"returns nil when there is one job": {
+		"returns succeeded status and nil when there is one job": {
 			client: &mock.Client{
 				GetCombinedStatusFunc: func(ctx context.Context, owner, repo, ref string, opts *github.ListOptions) (*github.CombinedStatus, *github.Response, error) {
 					return &github.CombinedStatus{
@@ -133,7 +133,7 @@ func Test_statusValidator_Validate(t *testing.T) {
 				completeJobs: []string{},
 			},
 		},
-		"returns validate error when the success job count is invalid": {
+		"returns failed status and nil when successful job count is less than total": {
 			targetJobName: "target-job",
 			client: &mock.Client{
 				GetCombinedStatusFunc: func(ctx context.Context, owner, repo, ref string, opts *github.ListOptions) (*github.CombinedStatus, *github.Response, error) {
@@ -171,7 +171,7 @@ func Test_statusValidator_Validate(t *testing.T) {
 				},
 			},
 		},
-		"returns (status, nil) when validation is success": {
+		"returns succeeded status and nil when validation is success": {
 			targetJobName: "target-job",
 			client: &mock.Client{
 				GetCombinedStatusFunc: func(ctx context.Context, owner, repo, ref string, opts *github.ListOptions) (*github.CombinedStatus, *github.Response, error) {
