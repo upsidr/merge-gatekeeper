@@ -12,3 +12,5 @@ jobs:
     name: check-other-job-status
     steps:
       - uses: upsidr/check-other-job-status@main
+    with:
+      token: ${{ secrets.GITHUB_TOKEN }}
