@@ -5,7 +5,7 @@ import "fmt"
 type status struct {
 	totalJobs    []string
 	completeJobs []string
-	successed    bool
+	succeeded    bool
 }
 
 func (s *status) Detail() string {
@@ -20,5 +20,5 @@ jobs: %v`,
 }
 
 func (s *status) IsSuccess() bool {
-	return s.successed
+	return s.succeeded
 }

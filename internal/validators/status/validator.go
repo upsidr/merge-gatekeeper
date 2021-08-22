@@ -93,7 +93,7 @@ func (sv *statusValidator) Validate(ctx context.Context) (validators.Status, err
 	st := &status{
 		totalJobs:    make([]string, 0, len(ghaStatuses)),
 		completeJobs: make([]string, 0, len(ghaStatuses)),
-		successed:    true,
+		succeeded:    true,
 	}
 
 	switch len(ghaStatuses) {
@@ -116,7 +116,7 @@ func (sv *statusValidator) Validate(ctx context.Context) (validators.Status, err
 		}
 	}
 	if len(ghaStatuses)-1 != successCnt {
-		st.successed = false
+		st.succeeded = false
 		return st, nil
 	}
 
