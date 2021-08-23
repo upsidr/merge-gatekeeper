@@ -3,7 +3,7 @@ package mock
 import (
 	"context"
 
-	"github.com/upsidr/check-other-job-status/internal/github"
+	"github.com/upsidr/merge-gatekeeper/internal/github"
 )
 
 type Client struct {

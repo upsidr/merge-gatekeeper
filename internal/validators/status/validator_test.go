@@ -6,9 +6,9 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/upsidr/check-other-job-status/internal/github"
-	"github.com/upsidr/check-other-job-status/internal/github/mock"
-	"github.com/upsidr/check-other-job-status/internal/validators"
+	"github.com/upsidr/merge-gatekeeper/internal/github"
+	"github.com/upsidr/merge-gatekeeper/internal/github/mock"
+	"github.com/upsidr/merge-gatekeeper/internal/validators"
 )
 
 func stringPtr(str string) *string {

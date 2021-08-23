@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/upsidr/check-other-job-status/internal/cli"
+	"github.com/upsidr/merge-gatekeeper/internal/cli"
 )
 
 const (

@@ -10,16 +10,16 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/upsidr/check-other-job-status/internal/github"
-	"github.com/upsidr/check-other-job-status/internal/validators"
-	"github.com/upsidr/check-other-job-status/internal/validators/status"
+	"github.com/upsidr/merge-gatekeeper/internal/github"
+	"github.com/upsidr/merge-gatekeeper/internal/validators"
+	"github.com/upsidr/merge-gatekeeper/internal/validators/status"
 )
 
-const defaultJobName = "check-other-job-status"
+const defaultJobName = "merge-gatekeeper"
 
 // These variables will be set by command line flags.
 var (
-	ghRepo              string // e.g) upsidr/check-other-job-status
+	ghRepo              string // e.g) upsidr/merge-gatekeeper
 	ghRef               string
 	timeoutSecond       uint
 	validateInvalSecond uint

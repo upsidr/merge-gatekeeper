@@ -15,7 +15,7 @@ var (
 
 func Run(version string, args ...string) error {
 	cmd := &cobra.Command{
-		Use:     "ghajob",
+		Use:     "gatekeeper",
 		Short:   "Manage github actions job",
 		Version: version,
 	}

@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/upsidr/check-other-job-status/internal/github"
-	"github.com/upsidr/check-other-job-status/internal/multierror"
-	"github.com/upsidr/check-other-job-status/internal/validators"
+	"github.com/upsidr/merge-gatekeeper/internal/github"
+	"github.com/upsidr/merge-gatekeeper/internal/multierror"
+	"github.com/upsidr/merge-gatekeeper/internal/validators"
 )
 
 const (
@@ -23,10 +23,6 @@ const (
 const (
 	checkRunNeutralConclusion = "neutral"
 	checkRunSuccessConclusion = "success"
-)
-
-const (
-	validatorName = "check-other-job-status"
 )
 
 var (
@@ -61,7 +57,7 @@ func CreateValidator(c github.Client, opts ...Option) (validators.Validator, err
 }
 
 func (sv *statusValidator) Name() string {
-	return validatorName
+	return sv.targetJobName
 }
 
 func (sv *statusValidator) validateFields() error {

@@ -11,7 +11,7 @@ ARG UPX_OPTIONS
 ENV GO111MODULE on
 ENV LANG en_US.UTF-8
 ENV ORG upsidr
-ENV REPO check-other-job-status
+ENV REPO merge-gatekeeper
 ENV APP_NAME ghajob
 
 RUN apt-get update && apt-get install -y --no-install-recommends \

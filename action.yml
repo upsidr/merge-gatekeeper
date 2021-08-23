@@ -1,4 +1,4 @@
-name: 'Check other job status'
+name: 'Merge Gatekeeper'
 description: 'Check other job status'
 inputs:
   token:
@@ -7,7 +7,7 @@ inputs:
   job:
     description: 'set target job'
     required: false
-    default: "check-other-job-status"
+    default: "merge-gatekeeper"
   interval:
     description: 'set validate interval second (default 120)'
     required: false

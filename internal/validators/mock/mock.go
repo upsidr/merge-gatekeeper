@@ -3,7 +3,7 @@ package mock
 import (
 	"context"
 
-	"github.com/upsidr/check-other-job-status/internal/validators"
+	"github.com/upsidr/merge-gatekeeper/internal/validators"
 )
 
 type Status struct {

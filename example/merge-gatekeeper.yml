@@ -1,4 +1,4 @@
-name: "Check other job status"
+name: "Merge Gatekeeper"
 
 on:
   pull_request:
@@ -7,10 +7,10 @@ on:
       - master
 
 jobs:
-  check-other-job-status:
+  merge-gatekeeper:
     runs-on: ubuntu-latest
-    name: check-other-job-status
+    name: merge-gatekeeper
     steps:
-      - uses: upsidr/check-other-job-status@main
+      - uses: upsidr/merge-gatekeeper@main
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
