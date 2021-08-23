@@ -110,18 +110,13 @@ func doValidateCmd(ctx context.Context, logger logger, vs ...validators.Validato
 		case <-invalT.C:
 			var successCnt int
 			for _, v := range vs {
-				finishLog := debug(logger, "validator: "+v.Name())
-
-				st, err := v.Validate(ctx)
+				ok, err := validate(ctx, v, logger)
 				if err != nil {
-					return fmt.Errorf("error occurs\tvalidator: %s, err: %v", v.Name(), err)
+					return err
 				}
-
-				logger.Println(st.Detail())
-				if st.IsSuccess() {
+				if ok {
 					successCnt++
 				}
-				finishLog()
 			}
 			if successCnt == len(vs) {
 				logger.Println("all validations successful")
@@ -130,4 +125,20 @@ func doValidateCmd(ctx context.Context, logger logger, vs ...validators.Validato
 			logger.PrintErrln("validation failed")
 		}
 	}
+}
+
+func validate(ctx context.Context, v validators.Validator, logger logger) (bool, error) {
+	defer debug(logger, "validator: "+v.Name())()
+
+	st, err := v.Validate(ctx)
+	if err != nil {
+		return false, fmt.Errorf("error occurs\tvalidator: %s, err: %v", v.Name(), err)
+	}
+
+	logger.Println(st.Detail())
+
+	if !st.IsSuccess() {
+		return false, nil
+	}
+	return true, nil
 }
