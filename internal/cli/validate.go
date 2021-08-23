@@ -118,11 +118,13 @@ func doValidateCmd(ctx context.Context, logger logger, vs ...validators.Validato
 					successCnt++
 				}
 			}
-			if successCnt == len(vs) {
-				logger.Println("all validations successful")
-				return nil
+			if successCnt != len(vs) {
+				logger.PrintErrln("validation failed")
+				break
 			}
-			logger.PrintErrln("validation failed")
+
+			logger.Println("all validations successful")
+			return nil
 		}
 	}
 }
