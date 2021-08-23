@@ -59,13 +59,11 @@ func validateCmd() *cobra.Command {
 	cmd.PersistentFlags().StringVarP(&targetJobName, "job", "j", defaultJobName, "set target job name")
 
 	cmd.PersistentFlags().StringVarP(&ghRepo, "repo", "r", "", "set github repository")
-	cmd.MarkPersistentFlagRequired("repo")
 
 	cmd.PersistentFlags().StringVar(&ghRef, "ref", "", "set ref of github repository. the ref can be a SHA, a branch name, or tag name")
 	cmd.MarkPersistentFlagRequired("ref")
 
 	cmd.PersistentFlags().UintVar(&timeoutSecond, "timeout", 600, "set validate timeout second")
-
 	cmd.PersistentFlags().UintVar(&validateInvalSecond, "interval", 10, "set validate interval second")
 
 	return cmd
