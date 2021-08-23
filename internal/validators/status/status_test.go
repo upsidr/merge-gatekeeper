@@ -19,7 +19,8 @@ func Test_status_Detail(t *testing.T) {
 					"job-2",
 				},
 			},
-			want: `total job count: 2
+			want: `1 out of 2
+total job count: 2
 jobs: [job-1 job-2]
 completed job count: 1
 jobs: [job-2]`,
@@ -29,7 +30,8 @@ jobs: [job-2]`,
 				totalJobs:    []string{},
 				completeJobs: []string{},
 			},
-			want: `total job count: 0
+			want: `0 out of 0
+total job count: 0
 jobs: []
 completed job count: 0
 jobs: []`,
