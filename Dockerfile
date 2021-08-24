@@ -12,7 +12,7 @@ ENV GO111MODULE on
 ENV LANG en_US.UTF-8
 ENV ORG upsidr
 ENV REPO merge-gatekeeper
-ENV APP_NAME gatekeeper
+ENV APP_NAME merge-gatekeeper
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     upx \
@@ -43,10 +43,10 @@ RUN CGO_ENABLED=0 go build ./cmd/${APP_NAME} \
 FROM ${DISTROLESS_IMAGE}:${DISTROLESS_IMAGE_TAG}
 LABEL maintainer "${MAINTAINER}"
 
-ENV APP_NAME gatekeeper
+ENV APP_NAME merge-gatekeeper
 
 COPY --from=builder /usr/bin/${APP_NAME} /go/bin/${APP_NAME}
 
 USER nonroot:nonroot
 
-ENTRYPOINT ["/go/bin/gatekeeper"]
+ENTRYPOINT ["/go/bin/merge-gatekeeper"]

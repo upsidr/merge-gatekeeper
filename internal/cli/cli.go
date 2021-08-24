@@ -15,7 +15,7 @@ var (
 
 func Run(version string, args ...string) error {
 	cmd := &cobra.Command{
-		Use:     "gatekeeper",
+		Use:     "merge-gatekeeper",
 		Short:   "Get more refined merge control",
 		Version: version,
 	}
