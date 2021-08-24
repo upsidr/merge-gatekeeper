@@ -16,7 +16,7 @@ var (
 func Run(version string, args ...string) error {
 	cmd := &cobra.Command{
 		Use:     "gatekeeper",
-		Short:   "Manage github actions job",
+		Short:   "Get more refined merge control",
 		Version: version,
 	}
 	cmd.PersistentFlags().StringVarP(&ghToken, "token", "t", "", "set github token")
