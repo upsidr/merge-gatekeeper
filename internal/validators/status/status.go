@@ -11,10 +11,11 @@ type status struct {
 func (s *status) Detail() string {
 	return fmt.Sprintf(
 		`%d out of %d
-total job count: %d
-jobs: %v
-completed job count: %d
-jobs: %v`,
+
+  total job count: %d
+    jobs: %v
+  completed job count: %d
+    jobs: %v`,
 		len(s.completeJobs), len(s.totalJobs),
 		len(s.totalJobs), s.totalJobs,
 		len(s.completeJobs), s.completeJobs,
