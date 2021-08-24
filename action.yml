@@ -1,5 +1,5 @@
 name: 'Merge Gatekeeper'
-description: 'Check other job status'
+description: 'Get better merge control'
 inputs:
   token:
     description: 'set github token'
