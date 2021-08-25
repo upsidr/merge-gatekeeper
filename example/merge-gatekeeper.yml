@@ -1,0 +1,16 @@
+name: "Merge Gatekeeper"
+
+on:
+  pull_request:
+    branches:
+      - main
+      - master
+
+jobs:
+  merge-gatekeeper:
+    runs-on: ubuntu-latest
+    name: merge-gatekeeper
+    steps:
+      - uses: upsidr/merge-gatekeeper@main
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
