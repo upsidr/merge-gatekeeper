@@ -67,3 +67,5 @@ jobs:
 You can find the exact file at [`/example/merge-gatekeeper.yml`](/example/merge-gatekeeper.yml).
 
 <!-- == imptr: example-usage / end == -->
+
+For more information, you can check out [/docs/action-usage.md](/docs/action-usage.md).
