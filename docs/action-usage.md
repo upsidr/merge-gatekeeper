@@ -50,7 +50,7 @@ You can also use the latest spec by using Importer to improt directly from the s
 Create a YAML file with just a single Importer Marker:
 
 ```yaml
-# == imptr: merge-gatekeeper / begin from: https://github.com/upsidr/merge-gatekeeper/blob/main/example/definition.yaml#[standard-setup] ==
+# == imptr: merge-gatekeeper / begin from: https://github.com/upsidr/merge-gatekeeper/blob/main/example/definitions.yaml#[standard-setup] ==
 # == imptr: merge-gatekeeper / end ==
 ```
 
