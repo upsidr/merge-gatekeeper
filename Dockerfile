@@ -12,10 +12,9 @@ RUN mkdir -p $GOPATH/src
 
 WORKDIR ${GOPATH}/src/github.com/${ORG}/${REPO}
 
+COPY vendor .
 COPY go.mod .
 COPY go.sum .
-
-RUN go mod download
 
 WORKDIR ${GOPATH}/src/github.com/${ORG}/${REPO}/cmd
 COPY cmd .
@@ -25,7 +24,7 @@ COPY internal .
 
 WORKDIR ${GOPATH}/src/github.com/${ORG}/${REPO}
 
-RUN CGO_ENABLED=0 go build ./cmd/${APP_NAME} \
-    && mv ${APP_NAME} /go/bin/
+RUN CGO_ENABLED=0 go build ./cmd/${APP_NAME} &&
+    mv ${APP_NAME} /go/bin/
 
 ENTRYPOINT ["/go/bin/merge-gatekeeper"]
