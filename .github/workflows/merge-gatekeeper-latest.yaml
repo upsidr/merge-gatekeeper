@@ -1,0 +1,23 @@
+# == export: standard-setup / begin ==
+---
+name: "Merge Gatekeeper"
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  merge-gatekeeper:
+    runs-on: ubuntu-latest
+    name: merge-gatekeeper
+    steps:
+      - name: Check out
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - uses: ./
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+# == export: standard-setup / end ==
