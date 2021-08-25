@@ -15,7 +15,7 @@ import (
 	"github.com/upsidr/merge-gatekeeper/internal/validators/status"
 )
 
-const defaultJobName = "merge-gatekeeper"
+const defaultSelfJobName = "merge-gatekeeper"
 
 // These variables will be set by command line flags.
 var (
@@ -23,7 +23,7 @@ var (
 	ghRef               string
 	timeoutSecond       uint
 	validateInvalSecond uint
-	targetJobName       string
+	selfJobName         string
 )
 
 func validateCmd() *cobra.Command {
@@ -45,7 +45,7 @@ func validateCmd() *cobra.Command {
 			}
 
 			statusValidator, err := status.CreateValidator(github.NewClient(ctx, ghToken),
-				status.WithTargetJob(targetJobName),
+				status.WithSelfJob(selfJobName),
 				status.WithGitHubOwnerAndRepo(owner, repo),
 				status.WithGitHubRef(ghRef),
 			)
@@ -56,7 +56,7 @@ func validateCmd() *cobra.Command {
 		},
 	}
 
-	cmd.PersistentFlags().StringVarP(&targetJobName, "job", "j", defaultJobName, "set target job name")
+	cmd.PersistentFlags().StringVarP(&selfJobName, "self", "s", defaultSelfJobName, "set self job name")
 
 	cmd.PersistentFlags().StringVarP(&ghRepo, "repo", "r", "", "set github repository")
 

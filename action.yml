@@ -4,8 +4,8 @@ inputs:
   token:
     description: "set github token"
     required: true
-  job:
-    description: "set target job"
+  self:
+    description: "set self job name"
     required: false
     default: "merge-gatekeeper"
   interval:
@@ -26,7 +26,7 @@ runs:
   args:
     - "validate"
     - "--token=${{ inputs.token }}"
-    - "--job=${{ inputs.job }}"
+    - "--self=${{ inputs.self }}"
     - "--interval=${{ inputs.interval }}"
     - "--ref=${{ inputs.ref }}"
     - "--timeout=${{ inputs.timeout }}"
