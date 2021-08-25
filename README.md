@@ -20,7 +20,7 @@ NOTE <sup>(\*1)</sup>: There are some other hacks, such as using an empty job wi
 
 ---
 
-You can find [more details here](/details.md).
+You can find [more details here](/docs/details.md).
 
 ## 🧪 Action Inputs
 
