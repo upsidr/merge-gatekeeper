@@ -10,6 +10,11 @@ on:
     branches:
       - main
       - release/v*
+    paths:
+      - cmd/**
+      - internal/**
+      - go.mod
+      - go.sum
 
 env:
   GO_VERSION: 1.16.7
