@@ -98,19 +98,16 @@ func (sv *statusValidator) Validate(ctx context.Context) (validators.Status, err
 		succeeded:    true,
 	}
 
-	switch len(ghaStatuses) {
-	case 0:
-		return st, nil
-
-	// When there is no job than this validation job.
-	case 1:
-		st.totalJobs = append(st.totalJobs, ghaStatuses[0].Job)
+	// Return early if there is no job
+	if len(ghaStatuses) == 0 {
 		return st, nil
 	}
 
 	var successCnt int
 	for _, ghaStatus := range ghaStatuses {
+		// This job itself should be considered as success regardless of its status.
 		if ghaStatus.Job == sv.selfJobName {
+			successCnt++
 			continue
 		}
 		st.totalJobs = append(st.totalJobs, ghaStatus.Job)
@@ -120,7 +117,8 @@ func (sv *statusValidator) Validate(ctx context.Context) (validators.Status, err
 			successCnt++
 		}
 	}
-	if len(ghaStatuses)-1 != successCnt {
+
+	if len(ghaStatuses) != successCnt {
 		st.succeeded = false
 		return st, nil
 	}

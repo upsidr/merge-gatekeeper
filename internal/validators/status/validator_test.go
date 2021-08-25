@@ -110,7 +110,31 @@ func Test_statusValidator_Validate(t *testing.T) {
 				completeJobs: []string{},
 			},
 		},
-		"returns succeeded status and nil when there is one job": {
+		"returns succeeded status and nil when there is one job, which is itself": {
+			selfJobName: "self-job",
+			client: &mock.Client{
+				GetCombinedStatusFunc: func(ctx context.Context, owner, repo, ref string, opts *github.ListOptions) (*github.CombinedStatus, *github.Response, error) {
+					return &github.CombinedStatus{
+						Statuses: []*github.RepoStatus{
+							{
+								Context: stringPtr("self-job"),
+								State:   stringPtr(pendingState), // should be irrelevant
+							},
+						},
+					}, nil, nil
+				},
+				ListCheckRunsForRefFunc: func(ctx context.Context, owner, repo, ref string, opts *github.ListCheckRunsOptions) (*github.ListCheckRunsResults, *github.Response, error) {
+					return &github.ListCheckRunsResults{}, nil, nil
+				},
+			},
+			wantErr: false,
+			wantStatus: &status{
+				succeeded:    true,
+				totalJobs:    []string{},
+				completeJobs: []string{},
+			},
+		},
+		"returns failed status and nil when there is one job": {
 			client: &mock.Client{
 				GetCombinedStatusFunc: func(ctx context.Context, owner, repo, ref string, opts *github.ListOptions) (*github.CombinedStatus, *github.Response, error) {
 					return &github.CombinedStatus{
@@ -128,7 +152,7 @@ func Test_statusValidator_Validate(t *testing.T) {
 			},
 			wantErr: false,
 			wantStatus: &status{
-				succeeded:    true,
+				succeeded:    false,
 				totalJobs:    []string{"job"},
 				completeJobs: []string{},
 			},
