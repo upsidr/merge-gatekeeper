@@ -24,7 +24,7 @@ COPY internal .
 
 WORKDIR ${GOPATH}/src/github.com/${ORG}/${REPO}
 
-RUN CGO_ENABLED=0 go build ./cmd/${APP_NAME} &&
+RUN CGO_ENABLED=0 go build -mod vendor ./cmd/${APP_NAME} &&
     mv ${APP_NAME} /go/bin/
 
 ENTRYPOINT ["/go/bin/merge-gatekeeper"]
