@@ -1,0 +1,27 @@
+---
+name: Run Importer for Markdowns
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  importer:
+    name: Run Importer Generate for Markdowns
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Install Importer
+        run: brew install upsidr/tap/importer
+
+      - name: Run Importer against all *.md files
+        run: find . -name '*.md' -exec importer update {} \;
+      - name: Check if any change compared to the branch HEAD
+        run: |
+          git status --short
+          git diff-index --quiet HEAD
