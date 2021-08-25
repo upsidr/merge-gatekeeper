@@ -1,28 +1,28 @@
-name: 'Merge Gatekeeper'
-description: 'Get better merge control'
+name: "Merge Gatekeeper"
+description: "Get better merge control"
 inputs:
   token:
-    description: 'set github token'
+    description: "set github token"
     required: true
   job:
-    description: 'set target job'
+    description: "set target job"
     required: false
     default: "merge-gatekeeper"
   interval:
-    description: 'set validate interval second (default 120)'
+    description: "set validate interval second (default 30)"
     required: false
-    default: "120"
+    default: "30"
   timeout:
-    description: 'set validate timeout second (default 600)'
+    description: "set validate timeout second (default 600)"
     required: false
     default: "600"
   ref:
-    description: 'set ref of github repository. the ref can be a SHA, a branch name, or tag name'
+    description: "set ref of github repository. the ref can be a SHA, a branch name, or tag name"
     required: false
     default: ${{ github.event.pull_request.head.sha }}
 runs:
-  using: 'docker'
-  image: 'Dockerfile'
+  using: "docker"
+  image: "Dockerfile"
   args:
     - "validate"
     - "--token=${{ inputs.token }}"
