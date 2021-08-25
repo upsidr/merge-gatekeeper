@@ -98,11 +98,6 @@ func (sv *statusValidator) Validate(ctx context.Context) (validators.Status, err
 		succeeded:    true,
 	}
 
-	// Return early if there is no job
-	if len(ghaStatuses) == 0 {
-		return st, nil
-	}
-
 	var successCnt int
 	for _, ghaStatus := range ghaStatuses {
 		// This job itself should be considered as success regardless of its status.
