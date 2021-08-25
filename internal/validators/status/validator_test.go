@@ -32,14 +32,14 @@ func TestCreateValidator(t *testing.T) {
 			opts: []Option{
 				WithGitHubOwnerAndRepo("test-owner", "test-repo"),
 				WithGitHubRef("sha"),
-				WithTargetJob("job"),
+				WithSelfJob("job"),
 			},
 			want: &statusValidator{
-				client:        &mock.Client{},
-				owner:         "test-owner",
-				repo:          "test-repo",
-				ref:           "sha",
-				targetJobName: "job",
+				client:      &mock.Client{},
+				owner:       "test-owner",
+				repo:        "test-repo",
+				ref:         "sha",
+				selfJobName: "job",
 			},
 			wantErr: false,
 		},
@@ -49,15 +49,15 @@ func TestCreateValidator(t *testing.T) {
 				WithGitHubOwnerAndRepo("test", "test-repo"),
 				WithGitHubRef("sha"),
 				WithGitHubRef("sha-01"),
-				WithTargetJob("job"),
-				WithTargetJob("job-01"),
+				WithSelfJob("job"),
+				WithSelfJob("job-01"),
 			},
 			want: &statusValidator{
-				client:        &mock.Client{},
-				owner:         "test",
-				repo:          "test-repo",
-				ref:           "sha-01",
-				targetJobName: "job-01",
+				client:      &mock.Client{},
+				owner:       "test",
+				repo:        "test-repo",
+				ref:         "sha-01",
+				selfJobName: "job-01",
 			},
 			wantErr: false,
 		},
@@ -78,11 +78,11 @@ func TestCreateValidator(t *testing.T) {
 
 func Test_statusValidator_Validate(t *testing.T) {
 	type test struct {
-		targetJobName string
-		client        github.Client
-		ctx           context.Context
-		wantErr       bool
-		wantStatus    validators.Status
+		selfJobName string
+		client      github.Client
+		ctx         context.Context
+		wantErr     bool
+		wantStatus  validators.Status
 	}
 	tests := map[string]test{
 		"returns error when listGhaStatuses return an error": {
@@ -134,7 +134,7 @@ func Test_statusValidator_Validate(t *testing.T) {
 			},
 		},
 		"returns failed status and nil when successful job count is less than total": {
-			targetJobName: "target-job",
+			selfJobName: "self-job",
 			client: &mock.Client{
 				GetCombinedStatusFunc: func(ctx context.Context, owner, repo, ref string, opts *github.ListOptions) (*github.CombinedStatus, *github.Response, error) {
 					return &github.CombinedStatus{
@@ -148,7 +148,7 @@ func Test_statusValidator_Validate(t *testing.T) {
 								State:   stringPtr(errorState),
 							},
 							{
-								Context: stringPtr("target-job"),
+								Context: stringPtr("self-job"),
 								State:   stringPtr(pendingState),
 							},
 						},
@@ -171,7 +171,7 @@ func Test_statusValidator_Validate(t *testing.T) {
 			},
 		},
 		"returns succeeded status and nil when validation is success": {
-			targetJobName: "target-job",
+			selfJobName: "self-job",
 			client: &mock.Client{
 				GetCombinedStatusFunc: func(ctx context.Context, owner, repo, ref string, opts *github.ListOptions) (*github.CombinedStatus, *github.Response, error) {
 					return &github.CombinedStatus{
@@ -185,7 +185,7 @@ func Test_statusValidator_Validate(t *testing.T) {
 								State:   stringPtr(successState),
 							},
 							{
-								Context: stringPtr("target-job"),
+								Context: stringPtr("self-job"),
 								State:   stringPtr(pendingState),
 							},
 						},
@@ -212,8 +212,8 @@ func Test_statusValidator_Validate(t *testing.T) {
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
 			sv := &statusValidator{
-				targetJobName: tt.targetJobName,
-				client:        tt.client,
+				selfJobName: tt.selfJobName,
+				client:      tt.client,
 			}
 			got, err := sv.Validate(tt.ctx)
 			if (err != nil) != tt.wantErr {
@@ -229,12 +229,12 @@ func Test_statusValidator_Validate(t *testing.T) {
 
 func Test_statusValidator_listStatues(t *testing.T) {
 	type fields struct {
-		token         string
-		repo          string
-		owner         string
-		ref           string
-		targetJobName string
-		client        github.Client
+		token       string
+		repo        string
+		owner       string
+		ref         string
+		selfJobName string
+		client      github.Client
 	}
 	type test struct {
 		fields  fields
@@ -251,11 +251,11 @@ func Test_statusValidator_listStatues(t *testing.T) {
 			}
 			return test{
 				fields: fields{
-					client:        c,
-					targetJobName: "target-job",
-					owner:         "test-owner",
-					repo:          "test-repo",
-					ref:           "main",
+					client:      c,
+					selfJobName: "self-job",
+					owner:       "test-owner",
+					repo:        "test-repo",
+					ref:         "main",
 				},
 				wantErr: true,
 			}
@@ -272,11 +272,11 @@ func Test_statusValidator_listStatues(t *testing.T) {
 			}
 			return test{
 				fields: fields{
-					client:        c,
-					targetJobName: "target-job",
-					owner:         "test-owner",
-					repo:          "test-repo",
-					ref:           "main",
+					client:      c,
+					selfJobName: "self-job",
+					owner:       "test-owner",
+					repo:        "test-repo",
+					ref:         "main",
 				},
 				wantErr: true,
 			}
@@ -292,11 +292,11 @@ func Test_statusValidator_listStatues(t *testing.T) {
 			}
 			return test{
 				fields: fields{
-					client:        c,
-					targetJobName: "target-job",
-					owner:         "test-owner",
-					repo:          "test-repo",
-					ref:           "main",
+					client:      c,
+					selfJobName: "self-job",
+					owner:       "test-owner",
+					repo:        "test-repo",
+					ref:         "main",
 				},
 				wantErr: true,
 			}
@@ -316,11 +316,11 @@ func Test_statusValidator_listStatues(t *testing.T) {
 			}
 			return test{
 				fields: fields{
-					client:        c,
-					targetJobName: "target-job",
-					owner:         "test-owner",
-					repo:          "test-repo",
-					ref:           "main",
+					client:      c,
+					selfJobName: "self-job",
+					owner:       "test-owner",
+					repo:        "test-repo",
+					ref:         "main",
 				},
 				wantErr: true,
 			}
@@ -365,11 +365,11 @@ func Test_statusValidator_listStatues(t *testing.T) {
 			}
 			return test{
 				fields: fields{
-					client:        c,
-					targetJobName: "target-job",
-					owner:         "test-owner",
-					repo:          "test-repo",
-					ref:           "main",
+					client:      c,
+					selfJobName: "self-job",
+					owner:       "test-owner",
+					repo:        "test-repo",
+					ref:         "main",
 				},
 				wantErr: false,
 				want: []*ghaStatus{
@@ -400,11 +400,11 @@ func Test_statusValidator_listStatues(t *testing.T) {
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
 			sv := &statusValidator{
-				repo:          tt.fields.repo,
-				owner:         tt.fields.owner,
-				ref:           tt.fields.ref,
-				targetJobName: tt.fields.targetJobName,
-				client:        tt.fields.client,
+				repo:        tt.fields.repo,
+				owner:       tt.fields.owner,
+				ref:         tt.fields.ref,
+				selfJobName: tt.fields.selfJobName,
+				client:      tt.fields.client,
 			}
 			got, err := sv.listGhaStatuses(tt.ctx)
 			if (err != nil) != tt.wantErr {

@@ -2,10 +2,10 @@ package status
 
 type Option func(s *statusValidator)
 
-func WithTargetJob(name string) Option {
+func WithSelfJob(name string) Option {
 	return func(s *statusValidator) {
 		if len(name) != 0 {
-			s.targetJobName = name
+			s.selfJobName = name
 		}
 	}
 }
