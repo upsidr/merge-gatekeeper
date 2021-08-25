@@ -19,8 +19,6 @@ At UPSIDER, we have a few internal repositories set up with a monorepo structure
 
 <!-- == imptr: background / end == -->
 
----
-
 You can find [more details here](/docs/details.md).
 
 ## 🧪 Action Inputs
