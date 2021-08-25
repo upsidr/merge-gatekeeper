@@ -114,7 +114,7 @@ func Test_statusValidator_Validate(t *testing.T) {
 			client: &mock.Client{
 				GetCombinedStatusFunc: func(ctx context.Context, owner, repo, ref string, opts *github.ListOptions) (*github.CombinedStatus, *github.Response, error) {
 					return &github.CombinedStatus{
-						Statuses: []github.RepoStatus{
+						Statuses: []*github.RepoStatus{
 							{
 								Context: stringPtr("job"),
 								State:   stringPtr(pendingState),
@@ -138,7 +138,7 @@ func Test_statusValidator_Validate(t *testing.T) {
 			client: &mock.Client{
 				GetCombinedStatusFunc: func(ctx context.Context, owner, repo, ref string, opts *github.ListOptions) (*github.CombinedStatus, *github.Response, error) {
 					return &github.CombinedStatus{
-						Statuses: []github.RepoStatus{
+						Statuses: []*github.RepoStatus{
 							{
 								Context: stringPtr("job-01"),
 								State:   stringPtr(successState),
@@ -175,7 +175,7 @@ func Test_statusValidator_Validate(t *testing.T) {
 			client: &mock.Client{
 				GetCombinedStatusFunc: func(ctx context.Context, owner, repo, ref string, opts *github.ListOptions) (*github.CombinedStatus, *github.Response, error) {
 					return &github.CombinedStatus{
-						Statuses: []github.RepoStatus{
+						Statuses: []*github.RepoStatus{
 							{
 								Context: stringPtr("job-01"),
 								State:   stringPtr(successState),
@@ -264,7 +264,7 @@ func Test_statusValidator_listStatues(t *testing.T) {
 			c := &mock.Client{
 				GetCombinedStatusFunc: func(ctx context.Context, owner, repo, ref string, opts *github.ListOptions) (*github.CombinedStatus, *github.Response, error) {
 					return &github.CombinedStatus{
-						Statuses: []github.RepoStatus{
+						Statuses: []*github.RepoStatus{
 							{},
 						},
 					}, nil, nil
@@ -329,7 +329,7 @@ func Test_statusValidator_listStatues(t *testing.T) {
 			c := &mock.Client{
 				GetCombinedStatusFunc: func(ctx context.Context, owner, repo, ref string, opts *github.ListOptions) (*github.CombinedStatus, *github.Response, error) {
 					return &github.CombinedStatus{
-						Statuses: []github.RepoStatus{
+						Statuses: []*github.RepoStatus{
 							{
 								Context: stringPtr("job-01"),
 								State:   stringPtr(successState),
