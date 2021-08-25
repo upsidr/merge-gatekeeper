@@ -47,7 +47,7 @@ You can find the exact file at [`/example/merge-gatekeeper.yml`](/example/merge-
 
 You can also use the latest spec by using Importer to improt directly from the sample setup in this repository.
 
-Create a YAML file containing the following input
+Create a YAML file with just a single Importer Marker:
 
 ```yaml
 # == imptr: merge-gatekeeper / begin from: https://github.com/upsidr/merge-gatekeeper/blob/main/example/definition.yml#[standard-setup] ==
