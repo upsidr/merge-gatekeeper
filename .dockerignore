@@ -1,0 +1,7 @@
+.github/
+docs/
+example/
+.gitignore
+action.yml
+LICENCE
+README.md

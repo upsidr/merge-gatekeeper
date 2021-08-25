@@ -12,7 +12,7 @@ RUN mkdir -p $GOPATH/src
 
 WORKDIR ${GOPATH}/src/github.com/${ORG}/${REPO}
 
-COPY vendor go.mod go.sum cmd internal ./
+COPY . .
 
 RUN CGO_ENABLED=0 go build ./cmd/${APP_NAME} \
     && mv ${APP_NAME} /go/bin/
