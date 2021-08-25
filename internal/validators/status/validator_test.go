@@ -164,7 +164,6 @@ func Test_statusValidator_Validate(t *testing.T) {
 				totalJobs: []string{
 					"job-01",
 					"job-02",
-					"target-job",
 				},
 				completeJobs: []string{
 					"job-01",
@@ -202,7 +201,6 @@ func Test_statusValidator_Validate(t *testing.T) {
 				totalJobs: []string{
 					"job-01",
 					"job-02",
-					"target-job",
 				},
 				completeJobs: []string{
 					"job-01",
