@@ -14,9 +14,8 @@ At UPSIDER, we have a few internal repositories set up with a monorepo structure
 
 ![Branch protection example](/assets/images/branch-protection-example.png)
 
----
-
-<sup><sub>NOTE <sup>(\*1)</sup>: There are some other hacks, such as using an empty job with the same name to override the status, but those solutions do not provide the flexible control we are after.</sub></sup>
+<sup><sub>NOTE:  
+<sup>(\*1)</sup> There are some other hacks, such as using an empty job with the same name to override the status, but those solutions do not provide the flexible control we are after.</sub></sup>
 
 <!-- == imptr: background / end == -->
 
