@@ -110,12 +110,12 @@ func (sv *statusValidator) Validate(ctx context.Context) (validators.Status, err
 
 	var successCnt int
 	for _, ghaStatus := range ghaStatuses {
-		if ghaStatus.Job != sv.targetJobName {
-			st.totalJobs = append(st.totalJobs, ghaStatus.Job)
+		if ghaStatus.Job == sv.targetJobName {
+			continue
+		}
+		st.totalJobs = append(st.totalJobs, ghaStatus.Job)
 
-			if ghaStatus.State != successState {
-				continue
-			}
+		if ghaStatus.State == successState {
 			st.completeJobs = append(st.completeJobs, ghaStatus.Job)
 			successCnt++
 		}
