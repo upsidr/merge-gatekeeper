@@ -1,6 +1,6 @@
 # == export: standard-setup / begin ==
 ---
-name: "Merge Gatekeeper"
+name: Merge Gatekeeper
 
 on:
   pull_request:
@@ -11,9 +11,10 @@ on:
 jobs:
   merge-gatekeeper:
     runs-on: ubuntu-latest
-    name: merge-gatekeeper
+    name: Merge Gatekeeper
     steps:
-      - uses: upsidr/merge-gatekeeper@main
+      - name: Run Merge Gatekeeper
+        uses: upsidr/merge-gatekeeper@main
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 # == export: standard-setup / end ==
