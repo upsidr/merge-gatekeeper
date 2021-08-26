@@ -4,11 +4,11 @@
 
 <!-- == export: background / begin == -->
 
-Pull Request plays a significant part in day-to-day development, and it is essential to ensure all merges are well controlled and managed to build robust system. GitHub provides some control over CI, reviews, etc., but there are some limitations with handling special cases. Merge Gatekeeper provides that extra control that's not handled by GitHub.
+Pull Request plays a significant part in day-to-day development, and it is essential to ensure all merges are well controlled and managed to build robust system. GitHub provides some control over CI, reviews, etc., but there are some limitations around handling specific use cases. Merge Gatekeeper is there to help achieve the extra control, which is otherwise difficult to achieve.
 
-At UPSIDER, we have a few internal repositories set up with a monorepo structure, where there are many types of code in a single repository. This comes with its own pros and cons, but one difficulty is how we end up with various CI jobs, which are only run for some changes that touch relevant files. With GitHub's branch protection, there is no way to specify "Ensure Go build and test pass _if and only if_ Go code is updated", or "Ensure E2E tests are run and successful _if and only if_ frontend code is updated". Because of this limitation, we would either need to run all the CI jobs for any Pull Requests, or do not set any limitation based on the CI status. <sup><sub><sup>(\*1)</sup></sub></sup>
+At UPSIDER, we have a few internal repositories set up with a monorepo structure, with many types of code in a single repository. This comes with its own pros and cons, but one difficulty is how we end up with various CI jobs, which only run for changes that touch relevant files. With GitHub's branch protection, there is no way to specify "Ensure Go build and test pass _if and only if_ Go code is updated", or "Ensure E2E tests are run and successful _if and only if_ frontend code is updated". Because of this limitation, we would either need to run all the CI jobs for any Pull Requests, or do not set any limitation based on the CI status. <sup><sub><sup>(\*1)</sup></sub></sup>
 
-**Merge Gatekeeper** was created to provide more control for merges. By placing Merge Gatekeeper for all PRs, it will check all other CI jobs that get kicked off for any PR, and ensures all the jobs are completed successfully. If there is any job that has failed, Merge Gatekeeper will fail as well. This allows you to control merge protection by looking at Merge Gatekeeper status, which means you can effectively ensure any CI that fails will block the PR merge. All you need is the Merge Gatekeeper as one of the PR based GitHub Action, and set the branch protection rule as shown below.
+**Merge Gatekeeper** was created to provide more control for merges. By placing Merge Gatekeeper for all PRs, it can check all other CI jobs that get kicked off for any PR, and ensures all the jobs are completed successfully. If there is any job that has failed, Merge Gatekeeper will fail as well. This provides a better control of merge protection by looking at Merge Gatekeeper status only, which means you can effectively ensure any CI failure will block merge. All you need is the Merge Gatekeeper as one of the PR based GitHub Action, and set the branch protection rule as shown below.
 
 ![Branch protection example](/assets/images/branch-protection-example.png)
 
@@ -17,9 +17,9 @@ At UPSIDER, we have a few internal repositories set up with a monorepo structure
 
 <!-- == export: background / end == -->
 
-## Support
+## Features
 
-<!-- == export: support / begin == -->
+<!-- == export: features / begin == -->
 
 Merge Gatekeeper provides additional control that may be useful for large and complex repositories.
 
@@ -34,7 +34,7 @@ We are currently considering additional validation controls such as:
 - extra approval by comment
 - label validation
 
-<!-- == export: support / end == -->
+<!-- == export: features / end == -->
 
 ## How does Merge Gatekeeper work?
 
