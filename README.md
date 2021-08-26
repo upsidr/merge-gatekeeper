@@ -67,6 +67,8 @@ jobs:
 
 ## 🧪 Action Inputs
 
+There are some customisation available for Merge Gatekeeper.
+
 <!-- == imptr: inputs / begin from: ./docs/action-usage.md#[inputs] == -->
 
 | Name       | Description                                                                                                                                                                                                                                                                                          | Required |
