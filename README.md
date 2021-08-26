@@ -81,4 +81,4 @@ There are some customisation available for Merge Gatekeeper.
 
 <!-- == imptr: inputs / end == -->
 
-For more information, you can check out [/docs/action-usage.md](/docs/action-usage.md).
+You can find [more details here](/docs/action-usage.md).
