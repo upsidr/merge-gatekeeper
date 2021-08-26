@@ -4,13 +4,15 @@
 
 <!-- == export: background / begin == -->
 
-Pull Request plays a significant part in day-to-day development, and it is essential to ensure all merges are well controlled and managed to build robust system. GitHub provides some control over CI, reviews, etc., but there are some limitations around handling specific use cases. Merge Gatekeeper is there to help achieve the extra control, which is otherwise difficult to achieve.
+Pull Request plays a significant part in day-to-day development, and it is essential to ensure all merges are well controlled and managed to build robust system. GitHub provides some control over CI, reviews, etc., but there are some limitations around handling specific use cases. Merge Gatekeeper helps overcome those, such as extra control for monorepos.
 
 At UPSIDER, we have a few internal repositories set up with a monorepo structure, with many types of code in a single repository. This comes with its own pros and cons, but one difficulty is how we end up with various CI jobs, which only run for changes that touch relevant files. With GitHub's branch protection, there is no way to specify "Ensure Go build and test pass _if and only if_ Go code is updated", or "Ensure E2E tests are run and successful _if and only if_ frontend code is updated". Because of this limitation, we would either need to run all the CI jobs for any Pull Requests, or do not set any limitation based on the CI status. <sup><sub><sup>(\*1)</sup></sub></sup>
 
-**Merge Gatekeeper** was created to provide more control for merges. By placing Merge Gatekeeper for all PRs, it can check all other CI jobs that get kicked off for any PR, and ensures all the jobs are completed successfully. If there is any job that has failed, Merge Gatekeeper will fail as well. This provides a better control of merge protection by looking at Merge Gatekeeper status only, which means you can effectively ensure any CI failure will block merge. All you need is the Merge Gatekeeper as one of the PR based GitHub Action, and set the branch protection rule as shown below.
+**Merge Gatekeeper** was created to provide more control for merges. By placing Merge Gatekeeper to run for all PRs, it can check all other CI jobs that get kicked off, and ensure all the jobs are completed successfully. If there is any job that has failed, Merge Gatekeeper will fail as well. This allows merge protection based on Merge Gatekeeper, which can effectively ensure any CI failure will block merge. All you need is the Merge Gatekeeper as one of the PR based GitHub Action, and set the branch protection rule as shown below.
 
 ![Branch protection example](/assets/images/branch-protection-example.png)
+
+We will be working to add a couple of more features, such as extra signoff from non-coder, label based check, etc.
 
 <sup><sub>NOTE:  
 <sup>(\*1)</sup> There are some other hacks, such as using an empty job with the same name to override the status, but those solutions do not provide the flexible control we are after.</sub></sup>
