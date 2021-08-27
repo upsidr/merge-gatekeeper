@@ -2,7 +2,6 @@ package cli
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -91,11 +90,21 @@ func debug(logger logger, name string) func() {
 }
 
 func doValidateCmd(ctx context.Context, logger logger, vs ...validators.Validator) error {
-	timeoutT := time.NewTicker(time.Duration(timeoutSecond) * time.Second)
-	defer timeoutT.Stop()
+	ctx, cancel := context.WithTimeout(ctx, time.Duration(timeoutSecond)*time.Second)
+	defer cancel()
 
 	invalT := time.NewTicker(time.Duration(validateInvalSecond) * time.Second)
 	defer invalT.Stop()
+
+	triggerCh := make(chan struct{}, 1)
+	triggerCh <- struct{}{}
+	defer close(triggerCh)
+
+	go func() {
+		for range invalT.C {
+			triggerCh <- struct{}{}
+		}
+	}()
 
 	defer debug(logger, "validation loop")()
 
@@ -103,9 +112,7 @@ func doValidateCmd(ctx context.Context, logger logger, vs ...validators.Validato
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
-		case <-timeoutT.C:
-			return errors.New("validation timed out")
-		case <-invalT.C:
+		case <-triggerCh:
 			var successCnt int
 			for _, v := range vs {
 				ok, err := validate(ctx, v, logger)
@@ -117,7 +124,7 @@ func doValidateCmd(ctx context.Context, logger logger, vs ...validators.Validato
 				}
 			}
 			if successCnt != len(vs) {
-				logger.PrintErrln("validation failed")
+				logger.PrintErrln("validation failed, waiting for next run")
 				break
 			}
 
