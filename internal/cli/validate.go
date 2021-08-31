@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/upsidr/merge-gatekeeper/internal/github"
+	"github.com/upsidr/merge-gatekeeper/internal/ticker"
 	"github.com/upsidr/merge-gatekeeper/internal/validators"
 	"github.com/upsidr/merge-gatekeeper/internal/validators/status"
 )
@@ -93,18 +94,8 @@ func doValidateCmd(ctx context.Context, logger logger, vs ...validators.Validato
 	ctx, cancel := context.WithTimeout(ctx, time.Duration(timeoutSecond)*time.Second)
 	defer cancel()
 
-	invalT := time.NewTicker(time.Duration(validateInvalSecond) * time.Second)
+	invalT := ticker.NewInstantTicker(time.Duration(validateInvalSecond) * time.Second)
 	defer invalT.Stop()
-
-	triggerCh := make(chan struct{}, 1)
-	triggerCh <- struct{}{}
-	defer close(triggerCh)
-
-	go func() {
-		for range invalT.C {
-			triggerCh <- struct{}{}
-		}
-	}()
 
 	defer debug(logger, "validation loop")()
 
@@ -112,7 +103,7 @@ func doValidateCmd(ctx context.Context, logger logger, vs ...validators.Validato
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
-		case <-triggerCh:
+		case <-invalT.C():
 			var successCnt int
 			for _, v := range vs {
 				ok, err := validate(ctx, v, logger)
