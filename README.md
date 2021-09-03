@@ -65,6 +65,8 @@ jobs:
 
 <!-- == imptr: example-usage / end == -->
 
+You can find [more details here](/docs/action-usage.md).
+
 ## 🧪 Action Inputs
 
 There are some customisation available for Merge Gatekeeper.
