@@ -17,3 +17,25 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 # == export: standard-setup / end ==
+
+# == export: custom-job-name / begin ==
+---
+name: Merge Gatekeeper
+
+on:
+  pull_request:
+    branches:
+      - main
+      - master
+
+jobs:
+  merge-gatekeeper-custom:
+    runs-on: ubuntu-latest
+    name: Custom Name for Merge Gatekeeper
+    steps:
+      - name: Run Merge Gatekeeper
+        uses: upsidr/merge-gatekeeper@main
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          self: Custom Name for Merge Gatekeeper # This must match with the Job name provided above.
+# == export: custom-job-name / end ==

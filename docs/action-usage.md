@@ -18,7 +18,23 @@
 
 ### Copy Standard YAML
 
-If you are after the other job status check provided by Merge Gatekeeper, you will simply need to copy the following YAML.
+<!-- == export: simple-usage / begin == -->
+
+The easiest approach is to copy the standard definition, and save it under `.github/workspaces` directory. There is no further modification required unless you have some specific requirements.
+
+#### With `curl`
+
+```bash
+curl -sSL https://raw.githubusercontent.com/upsidr/merge-gatekeeper/main/example/merge-gatekeeper.yml \
+  > .github/workflows/merge-gatekeeper.yml
+```
+
+#### Directly copy YAML
+
+The below is the copy of [`/example/merge-gatekeeper.yml`](/example/merge-gatekeeper.yml).
+
+<!-- TODO: replace below using Importer once Importer supports code block wrapping
+     == imptr: basic-yaml / begin from: ./example/definitions.yaml#[standard-setup] == -->
 
 ```yaml
 ---
@@ -33,7 +49,6 @@ on:
 jobs:
   merge-gatekeeper:
     runs-on: ubuntu-latest
-    name: Merge Gatekeeper
     steps:
       - name: Run Merge Gatekeeper
         uses: upsidr/merge-gatekeeper@main
@@ -41,7 +56,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
-You can find the exact file at [`/example/merge-gatekeeper.yml`](/example/merge-gatekeeper.yml).
+<!-- == export: simple-usage / end == -->
 
 ### Using Importer
 
@@ -55,3 +70,5 @@ Create a YAML file with just a single Importer Marker:
 ```
 
 With that, you can simply run `importer update FILENAME` to get the latest spec. You can also update the file used to specific branch or version.
+
+###
