@@ -95,6 +95,7 @@ func (sv *statusValidator) Validate(ctx context.Context) (validators.Status, err
 	st := &status{
 		totalJobs:    make([]string, 0, len(ghaStatuses)),
 		completeJobs: make([]string, 0, len(ghaStatuses)),
+		errJobs:      make([]string, 0, len(ghaStatuses)/2),
 		succeeded:    true,
 	}
 
@@ -107,10 +108,16 @@ func (sv *statusValidator) Validate(ctx context.Context) (validators.Status, err
 		}
 		st.totalJobs = append(st.totalJobs, ghaStatus.Job)
 
-		if ghaStatus.State == successState {
+		switch ghaStatus.State {
+		case successState:
 			st.completeJobs = append(st.completeJobs, ghaStatus.Job)
 			successCnt++
+		case errorState:
+			st.errJobs = append(st.errJobs, ghaStatus.Job)
 		}
+	}
+	if len(st.errJobs) != 0 {
+		return nil, fmt.Errorf("there are failed jobs: %v", st.errJobs)
 	}
 
 	if len(ghaStatuses) != successCnt {

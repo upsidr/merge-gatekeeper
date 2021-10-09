@@ -5,6 +5,7 @@ import "fmt"
 type status struct {
 	totalJobs    []string
 	completeJobs []string
+	errJobs      []string
 	succeeded    bool
 }
 
