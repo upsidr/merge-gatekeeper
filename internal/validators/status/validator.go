@@ -23,6 +23,7 @@ const (
 const (
 	checkRunNeutralConclusion = "neutral"
 	checkRunSuccessConclusion = "success"
+	checkRunSkipConclusion    = "skipped"
 )
 
 var (
@@ -117,7 +118,7 @@ func (sv *statusValidator) Validate(ctx context.Context) (validators.Status, err
 		}
 	}
 	if len(st.errJobs) != 0 {
-		return nil, fmt.Errorf("there are failed jobs: %v", st.errJobs)
+		return nil, errors.New(st.Detail())
 	}
 
 	if len(ghaStatuses) != successCnt {
@@ -157,6 +158,7 @@ func (sv *statusValidator) listGhaStatuses(ctx context.Context) ([]*ghaStatus, e
 		ghaStatus := &ghaStatus{
 			Job: *run.Name,
 		}
+
 		if *run.Status != checkRunCompletedStatus {
 			ghaStatus.State = pendingState
 			ghaStatuses = append(ghaStatuses, ghaStatus)
@@ -166,6 +168,8 @@ func (sv *statusValidator) listGhaStatuses(ctx context.Context) ([]*ghaStatus, e
 		switch *run.Conclusion {
 		case checkRunNeutralConclusion, checkRunSuccessConclusion:
 			ghaStatus.State = successState
+		case checkRunSkipConclusion:
+			continue
 		default:
 			ghaStatus.State = errorState
 		}

@@ -187,8 +187,18 @@ func Test_statusValidator_Validate(t *testing.T) {
 					return &github.ListCheckRunsResults{}, nil, nil
 				},
 			},
-			wantErr:    true,
-			wantErrStr: "there are failed jobs: [job-02]",
+			wantErr: true,
+			wantErrStr: (&status{
+				totalJobs: []string{
+					"job-01", "job-02",
+				},
+				completeJobs: []string{
+					"job-01",
+				},
+				errJobs: []string{
+					"job-02",
+				},
+			}).Detail(),
 		},
 		"returns failed status and nil when successful job count is less than total": {
 			selfJobName: "self-job",
@@ -422,6 +432,11 @@ func Test_statusValidator_listStatues(t *testing.T) {
 								Name:       stringPtr("job-05"),
 								Status:     stringPtr(checkRunCompletedStatus),
 								Conclusion: stringPtr("failure"),
+							},
+							{
+								Name:       stringPtr("job-06"),
+								Status:     stringPtr(checkRunCompletedStatus),
+								Conclusion: stringPtr(checkRunSkipConclusion),
 							},
 						},
 					}, nil, nil
