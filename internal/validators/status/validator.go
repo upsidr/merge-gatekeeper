@@ -23,6 +23,7 @@ const (
 const (
 	checkRunNeutralConclusion = "neutral"
 	checkRunSuccessConclusion = "success"
+	checkRunSkipConclusion    = "skipped"
 )
 
 var (
@@ -95,6 +96,7 @@ func (sv *statusValidator) Validate(ctx context.Context) (validators.Status, err
 	st := &status{
 		totalJobs:    make([]string, 0, len(ghaStatuses)),
 		completeJobs: make([]string, 0, len(ghaStatuses)),
+		errJobs:      make([]string, 0, len(ghaStatuses)/2),
 		succeeded:    true,
 	}
 
@@ -107,10 +109,16 @@ func (sv *statusValidator) Validate(ctx context.Context) (validators.Status, err
 		}
 		st.totalJobs = append(st.totalJobs, ghaStatus.Job)
 
-		if ghaStatus.State == successState {
+		switch ghaStatus.State {
+		case successState:
 			st.completeJobs = append(st.completeJobs, ghaStatus.Job)
 			successCnt++
+		case errorState:
+			st.errJobs = append(st.errJobs, ghaStatus.Job)
 		}
+	}
+	if len(st.errJobs) != 0 {
+		return nil, errors.New(st.Detail())
 	}
 
 	if len(ghaStatuses) != successCnt {
@@ -150,6 +158,7 @@ func (sv *statusValidator) listGhaStatuses(ctx context.Context) ([]*ghaStatus, e
 		ghaStatus := &ghaStatus{
 			Job: *run.Name,
 		}
+
 		if *run.Status != checkRunCompletedStatus {
 			ghaStatus.State = pendingState
 			ghaStatuses = append(ghaStatuses, ghaStatus)
@@ -159,6 +168,8 @@ func (sv *statusValidator) listGhaStatuses(ctx context.Context) ([]*ghaStatus, e
 		switch *run.Conclusion {
 		case checkRunNeutralConclusion, checkRunSuccessConclusion:
 			ghaStatus.State = successState
+		case checkRunSkipConclusion:
+			continue
 		default:
 			ghaStatus.State = errorState
 		}

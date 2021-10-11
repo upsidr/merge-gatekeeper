@@ -82,6 +82,7 @@ func Test_statusValidator_Validate(t *testing.T) {
 		client      github.Client
 		ctx         context.Context
 		wantErr     bool
+		wantErrStr  string
 		wantStatus  validators.Status
 	}
 	tests := map[string]test{
@@ -93,6 +94,7 @@ func Test_statusValidator_Validate(t *testing.T) {
 			},
 			wantErr:    true,
 			wantStatus: nil,
+			wantErrStr: "err",
 		},
 		"returns succeeded status and nil when there is no job": {
 			client: &mock.Client{
@@ -108,6 +110,7 @@ func Test_statusValidator_Validate(t *testing.T) {
 				succeeded:    true,
 				totalJobs:    []string{},
 				completeJobs: []string{},
+				errJobs:      []string{},
 			},
 		},
 		"returns succeeded status and nil when there is one job, which is itself": {
@@ -132,6 +135,7 @@ func Test_statusValidator_Validate(t *testing.T) {
 				succeeded:    true,
 				totalJobs:    []string{},
 				completeJobs: []string{},
+				errJobs:      []string{},
 			},
 		},
 		"returns failed status and nil when there is one job": {
@@ -155,9 +159,10 @@ func Test_statusValidator_Validate(t *testing.T) {
 				succeeded:    false,
 				totalJobs:    []string{"job"},
 				completeJobs: []string{},
+				errJobs:      []string{},
 			},
 		},
-		"returns failed status and nil when successful job count is less than total": {
+		"returns error when there is a failed job": {
 			selfJobName: "self-job",
 			client: &mock.Client{
 				GetCombinedStatusFunc: func(ctx context.Context, owner, repo, ref string, opts *github.ListOptions) (*github.CombinedStatus, *github.Response, error) {
@@ -182,6 +187,44 @@ func Test_statusValidator_Validate(t *testing.T) {
 					return &github.ListCheckRunsResults{}, nil, nil
 				},
 			},
+			wantErr: true,
+			wantErrStr: (&status{
+				totalJobs: []string{
+					"job-01", "job-02",
+				},
+				completeJobs: []string{
+					"job-01",
+				},
+				errJobs: []string{
+					"job-02",
+				},
+			}).Detail(),
+		},
+		"returns failed status and nil when successful job count is less than total": {
+			selfJobName: "self-job",
+			client: &mock.Client{
+				GetCombinedStatusFunc: func(ctx context.Context, owner, repo, ref string, opts *github.ListOptions) (*github.CombinedStatus, *github.Response, error) {
+					return &github.CombinedStatus{
+						Statuses: []*github.RepoStatus{
+							{
+								Context: stringPtr("job-01"),
+								State:   stringPtr(successState),
+							},
+							{
+								Context: stringPtr("job-02"),
+								State:   stringPtr(pendingState),
+							},
+							{
+								Context: stringPtr("self-job"),
+								State:   stringPtr(pendingState),
+							},
+						},
+					}, nil, nil
+				},
+				ListCheckRunsForRefFunc: func(ctx context.Context, owner, repo, ref string, opts *github.ListCheckRunsOptions) (*github.ListCheckRunsResults, *github.Response, error) {
+					return &github.ListCheckRunsResults{}, nil, nil
+				},
+			},
 			wantErr: false,
 			wantStatus: &status{
 				succeeded: false,
@@ -192,6 +235,7 @@ func Test_statusValidator_Validate(t *testing.T) {
 				completeJobs: []string{
 					"job-01",
 				},
+				errJobs: []string{},
 			},
 		},
 		"returns succeeded status and nil when validation is success": {
@@ -230,6 +274,7 @@ func Test_statusValidator_Validate(t *testing.T) {
 					"job-01",
 					"job-02",
 				},
+				errJobs: []string{},
 			},
 		},
 	}
@@ -243,6 +288,11 @@ func Test_statusValidator_Validate(t *testing.T) {
 			if (err != nil) != tt.wantErr {
 				t.Errorf("statusValidator.Validate() error = %v, wantErr %v", err, tt.wantErr)
 				return
+			}
+			if tt.wantErr {
+				if err.Error() != tt.wantErrStr {
+					t.Errorf("statusValidator.Validate() error.Error() = %s, wantErrStr %s", err.Error(), tt.wantErrStr)
+				}
 			}
 			if !reflect.DeepEqual(got, tt.wantStatus) {
 				t.Errorf("statusValidator.Validate() status = %v, want %v", got, tt.wantStatus)
@@ -382,6 +432,11 @@ func Test_statusValidator_listStatues(t *testing.T) {
 								Name:       stringPtr("job-05"),
 								Status:     stringPtr(checkRunCompletedStatus),
 								Conclusion: stringPtr("failure"),
+							},
+							{
+								Name:       stringPtr("job-06"),
+								Status:     stringPtr(checkRunCompletedStatus),
+								Conclusion: stringPtr(checkRunSkipConclusion),
 							},
 						},
 					}, nil, nil

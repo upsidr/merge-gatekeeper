@@ -52,6 +52,8 @@ func validateCmd() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("failed to create validator: %w", err)
 			}
+
+			cmd.SilenceUsage = true
 			return doValidateCmd(ctx, cmd, statusValidator)
 		},
 	}
