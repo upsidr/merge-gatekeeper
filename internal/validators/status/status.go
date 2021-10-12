@@ -14,11 +14,11 @@ func (s *status) Detail() string {
 		`%d out of %d
 
   total job count: %d
-    jobs: %v
+    jobs: %+q
   completed job count: %d
-    jobs: %v
+    jobs: %+q
   failed job count: %d
-    jobs: %v`,
+    jobs: %+q`,
 		len(s.completeJobs), len(s.totalJobs),
 		len(s.totalJobs), s.totalJobs,
 		len(s.completeJobs), s.completeJobs,

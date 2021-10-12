@@ -26,11 +26,11 @@ func Test_status_Detail(t *testing.T) {
 			want: `1 out of 3
 
   total job count: 3
-    jobs: [job-1 job-2 job-3]
+    jobs: ["job-1" "job-2" "job-3"]
   completed job count: 1
-    jobs: [job-2]
+    jobs: ["job-2"]
   failed job count: 1
-    jobs: [job-3]`,
+    jobs: ["job-3"]`,
 		},
 		"return detail when totalJobs and completeJobs is empty": {
 			s: &status{
