@@ -1,5 +1,8 @@
 name: "Merge Gatekeeper"
 description: "Get better merge control"
+branding:
+  icon: git-merge
+  color: orange
 inputs:
   token:
     description: "set github token"
