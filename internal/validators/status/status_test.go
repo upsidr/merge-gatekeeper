@@ -25,12 +25,13 @@ func Test_status_Detail(t *testing.T) {
 			},
 			want: `1 out of 3
 
-  total job count: 3
+  Total job count:     3
     jobs: ["job-1" "job-2" "job-3"]
-  completed job count: 1
+  Completed job count: 1
     jobs: ["job-2"]
-  failed job count: 1
-    jobs: ["job-3"]`,
+  Failed job count:    1
+    jobs: ["job-3"]
+`,
 		},
 		"return detail when totalJobs and completeJobs is empty": {
 			s: &status{
@@ -39,12 +40,13 @@ func Test_status_Detail(t *testing.T) {
 			},
 			want: `0 out of 0
 
-  total job count: 0
+  Total job count:     0
     jobs: []
-  completed job count: 0
+  Completed job count: 0
     jobs: []
-  failed job count: 0
-    jobs: []`,
+  Failed job count:    0
+    jobs: []
+`,
 		},
 	}
 
