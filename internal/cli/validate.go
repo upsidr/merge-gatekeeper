@@ -86,9 +86,9 @@ func ownerAndRepository(str string) (owner string, repo string) {
 }
 
 func debug(logger logger, name string) func() {
-	logger.Printf("start %s processing....\n", name)
+	logger.Printf("Start processing %s....\n", name)
 	return func() {
-		logger.Printf("finish %s processing\n", name)
+		logger.Printf("Finish %s processing.\n", name)
 	}
 }
 
@@ -98,8 +98,6 @@ func doValidateCmd(ctx context.Context, logger logger, vs ...validators.Validato
 
 	invalT := ticker.NewInstantTicker(time.Duration(validateInvalSecond) * time.Second)
 	defer invalT.Stop()
-
-	defer debug(logger, "validation loop")()
 
 	for {
 		select {
@@ -117,11 +115,13 @@ func doValidateCmd(ctx context.Context, logger logger, vs ...validators.Validato
 				}
 			}
 			if successCnt != len(vs) {
-				logger.PrintErrln("validation failed, waiting for next run")
+				logger.PrintErrln("")
+				logger.PrintErrln("  WARNING: Validation is yet to be completed. This is most likely due to some other jobs still running.")
+				logger.PrintErrf("           Waiting for %d seconds before retrying.\n\n", validateInvalSecond)
 				break
 			}
 
-			logger.Println("all validations successful")
+			logger.Println("All validations were successful!")
 			return nil
 		}
 	}
@@ -132,7 +132,7 @@ func validate(ctx context.Context, v validators.Validator, logger logger) (bool,
 
 	st, err := v.Validate(ctx)
 	if err != nil {
-		return false, fmt.Errorf("error occurs\tvalidator: %s, err: %v", v.Name(), err)
+		return false, fmt.Errorf("validation failed, err: %v", err)
 	}
 
 	logger.Println(st.Detail())
