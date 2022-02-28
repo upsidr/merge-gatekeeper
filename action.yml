@@ -12,9 +12,9 @@ inputs:
     required: false
     default: "merge-gatekeeper"
   interval:
-    description: "set validate interval second (default 30)"
+    description: "set validate interval second (default 5)"
     required: false
-    default: "30"
+    default: "5"
   timeout:
     description: "set validate timeout second (default 600)"
     required: false
