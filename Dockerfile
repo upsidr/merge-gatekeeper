@@ -5,8 +5,7 @@ FROM golang:${GO_VERSION}-alpine
 ARG ORG=upsidr
 ARG REPO=merge-gatekeeper
 
-ENV GO111MODULE on
-ENV LANG en_US.UTF-8
+ENV GO111MODULE=on LANG=en_US.UTF-8
 
 RUN mkdir -p $GOPATH/src
 
