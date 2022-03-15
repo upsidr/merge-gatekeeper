@@ -2,10 +2,11 @@ ARG GO_VERSION=1.16.7
 
 FROM golang:${GO_VERSION}-alpine
 
+ARG ORG=upsidr
+ARG REPO=merge-gatekeeper
+
 ENV GO111MODULE on
 ENV LANG en_US.UTF-8
-ENV ORG upsidr
-ENV REPO merge-gatekeeper
 
 RUN mkdir -p $GOPATH/src
 
