@@ -317,7 +317,7 @@ func Test_statusValidator_listStatues(t *testing.T) {
 		want    []*ghaStatus
 	}
 	tests := map[string]test{
-		"returns nil when the same job exists": func() test {
+		"succeeds to get job statuses even if the same job exists": func() test {
 			c := &mock.Client{
 				GetCombinedStatusFunc: func(ctx context.Context, owner, repo, ref string, opts *github.ListOptions) (*github.CombinedStatus, *github.Response, error) {
 					return &github.CombinedStatus{
