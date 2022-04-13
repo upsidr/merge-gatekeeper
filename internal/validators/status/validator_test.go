@@ -327,7 +327,7 @@ func Test_statusValidator_listStatues(t *testing.T) {
 								State:   stringPtr(successState),
 							},
 							{
-								Context: stringPtr("job-01"), // Same as previous job name.
+								Context: stringPtr("job-01"), // Same as above job name, and thus should be disregarded as old job status
 								State:   stringPtr(errorState),
 							},
 						},
