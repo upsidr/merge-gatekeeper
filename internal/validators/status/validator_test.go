@@ -317,6 +317,93 @@ func Test_statusValidator_listStatues(t *testing.T) {
 		want    []*ghaStatus
 	}
 	tests := map[string]test{
+		"succeeds to get job statuses even if the same job exists": func() test {
+			c := &mock.Client{
+				GetCombinedStatusFunc: func(ctx context.Context, owner, repo, ref string, opts *github.ListOptions) (*github.CombinedStatus, *github.Response, error) {
+					return &github.CombinedStatus{
+						Statuses: []*github.RepoStatus{
+							// The first element here is the latest state.
+							{
+								Context: stringPtr("job-01"),
+								State:   stringPtr(successState),
+							},
+							{
+								Context: stringPtr("job-01"), // Same as above job name, and thus should be disregarded as old job status.
+								State:   stringPtr(errorState),
+							},
+						},
+					}, nil, nil
+				},
+				ListCheckRunsForRefFunc: func(ctx context.Context, owner, repo, ref string, opts *github.ListCheckRunsOptions) (*github.ListCheckRunsResults, *github.Response, error) {
+					return &github.ListCheckRunsResults{
+						CheckRuns: []*github.CheckRun{
+							// The first element here is the latest state.
+							{
+								Name:   stringPtr("job-02"),
+								Status: stringPtr("failure"),
+							},
+							{
+								Name:       stringPtr("job-02"), // Same as above job name, and thus should be disregarded as old job status.
+								Status:     stringPtr(checkRunCompletedStatus),
+								Conclusion: stringPtr(checkRunNeutralConclusion),
+							},
+							{
+								Name:       stringPtr("job-03"),
+								Status:     stringPtr(checkRunCompletedStatus),
+								Conclusion: stringPtr(checkRunNeutralConclusion),
+							},
+							{
+								Name:       stringPtr("job-04"),
+								Status:     stringPtr(checkRunCompletedStatus),
+								Conclusion: stringPtr(checkRunSuccessConclusion),
+							},
+							{
+								Name:       stringPtr("job-05"),
+								Status:     stringPtr(checkRunCompletedStatus),
+								Conclusion: stringPtr("failure"),
+							},
+							{
+								Name:       stringPtr("job-06"),
+								Status:     stringPtr(checkRunCompletedStatus),
+								Conclusion: stringPtr(checkRunSkipConclusion),
+							},
+						},
+					}, nil, nil
+				},
+			}
+			return test{
+				fields: fields{
+					client:      c,
+					selfJobName: "self-job",
+					owner:       "test-owner",
+					repo:        "test-repo",
+					ref:         "main",
+				},
+				wantErr: false,
+				want: []*ghaStatus{
+					{
+						Job:   "job-01",
+						State: successState,
+					},
+					{
+						Job:   "job-02",
+						State: pendingState,
+					},
+					{
+						Job:   "job-03",
+						State: successState,
+					},
+					{
+						Job:   "job-04",
+						State: successState,
+					},
+					{
+						Job:   "job-05",
+						State: errorState,
+					},
+				},
+			}
+		}(),
 		"returns error when the GetCombinedStatus returns an error": func() test {
 			c := &mock.Client{
 				GetCombinedStatusFunc: func(ctx context.Context, owner, repo, ref string, opts *github.ListOptions) (*github.CombinedStatus, *github.Response, error) {

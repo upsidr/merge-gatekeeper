@@ -135,11 +135,20 @@ func (sv *statusValidator) listGhaStatuses(ctx context.Context) ([]*ghaStatus, e
 		return nil, err
 	}
 
+	// Because multiple jobs with the same name may exist when jobs are created dynamically by third-party tools, etc.,
+	// only the latest job should be managed.
+	currentJobs := make(map[string]struct{})
+
 	ghaStatuses := make([]*ghaStatus, 0, len(combined.Statuses))
 	for _, s := range combined.Statuses {
 		if s.Context == nil || s.State == nil {
 			return nil, fmt.Errorf("%w context: %v, status: %v", ErrInvalidCombinedStatusResponse, s.Context, s.State)
 		}
+		if _, ok := currentJobs[*s.Context]; ok {
+			continue
+		}
+		currentJobs[*s.Context] = struct{}{}
+
 		ghaStatuses = append(ghaStatuses, &ghaStatus{
 			Job:   *s.Context,
 			State: *s.State,
@@ -155,6 +164,11 @@ func (sv *statusValidator) listGhaStatuses(ctx context.Context) ([]*ghaStatus, e
 		if run.Name == nil || run.Status == nil {
 			return nil, fmt.Errorf("%w name: %v, status: %v", ErrInvalidCheckRunResponse, run.Name, run.Status)
 		}
+		if _, ok := currentJobs[*run.Name]; ok {
+			continue
+		}
+		currentJobs[*run.Name] = struct{}{}
+
 		ghaStatus := &ghaStatus{
 			Job: *run.Name,
 		}
