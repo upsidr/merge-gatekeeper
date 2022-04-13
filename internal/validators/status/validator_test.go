@@ -322,6 +322,7 @@ func Test_statusValidator_listStatues(t *testing.T) {
 				GetCombinedStatusFunc: func(ctx context.Context, owner, repo, ref string, opts *github.ListOptions) (*github.CombinedStatus, *github.Response, error) {
 					return &github.CombinedStatus{
 						Statuses: []*github.RepoStatus{
+							// The first element here is the latest state
 							{
 								Context: stringPtr("job-01"),
 								State:   stringPtr(successState),
