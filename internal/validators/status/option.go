@@ -1,5 +1,7 @@
 package status
 
+import "strings"
+
 type Option func(s *statusValidator)
 
 func WithSelfJob(name string) Option {
@@ -25,6 +27,14 @@ func WithGitHubRef(ref string) Option {
 	return func(s *statusValidator) {
 		if len(ref) != 0 {
 			s.ref = ref
+		}
+	}
+}
+
+func WithIgnoredJobs(names string) Option {
+	return func(s *statusValidator) {
+		if len(names) != 0 {
+			s.ignoredJobs = strings.Split(names, ",")
 		}
 	}
 }

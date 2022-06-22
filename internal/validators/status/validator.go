@@ -41,6 +41,7 @@ type statusValidator struct {
 	owner       string
 	ref         string
 	selfJobName string
+	ignoredJobs []string
 	client      github.Client
 }
 
@@ -76,6 +77,11 @@ func (sv *statusValidator) validateFields() error {
 	if len(sv.selfJobName) == 0 {
 		errs = append(errs, errors.New("self job name is empty"))
 	}
+	for _, job := range sv.ignoredJobs {
+		if len(job) == 0 {
+			errs = append(errs, errors.New("ignored job name is empty"))
+		}
+	}
 	if sv.client == nil {
 		errs = append(errs, errors.New("github client is empty"))
 	}
@@ -102,11 +108,20 @@ func (sv *statusValidator) Validate(ctx context.Context) (validators.Status, err
 
 	var successCnt int
 	for _, ghaStatus := range ghaStatuses {
-		// This job itself should be considered as success regardless of its status.
-		if ghaStatus.Job == sv.selfJobName {
+		var toIgnore bool
+		for _, ignored := range sv.ignoredJobs {
+			if ghaStatus.Job == ignored {
+				toIgnore = true
+				break
+			}
+		}
+
+		// Ignored jobs and this job itself should be considered as success regardless of their statuses.
+		if toIgnore || ghaStatus.Job == sv.selfJobName {
 			successCnt++
 			continue
 		}
+
 		st.totalJobs = append(st.totalJobs, ghaStatus.Job)
 
 		switch ghaStatus.State {
