@@ -38,11 +38,9 @@ curl -sSL https://raw.githubusercontent.com/upsidr/merge-gatekeeper/main/example
 
 #### Directly copy YAML
 
-The below is the copy of [`/example/merge-gatekeeper.yml`](/example/merge-gatekeeper.yml).
+The below is the copy of [`/example/merge-gatekeeper.yml`](/example/merge-gatekeeper.yml), with extra comments.
 
-<!-- TODO: replace below using Importer once Importer supports code block wrapping
-     == imptr: basic-yaml / begin from: ./example/definitions.yaml#[standard-setup] == -->
-
+<!-- == imptr: basic-yaml / begin from: ../example/definitions.yaml#[standard-setup] wrap: yaml == -->
 ```yaml
 ---
 name: Merge Gatekeeper
@@ -58,10 +56,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Run Merge Gatekeeper
-        uses: upsidr/merge-gatekeeper@main
+        # NOTE: v1 is updated to reflect the latest v1.x.y. Please use any tag/branch that suits your needs:
+        #       https://github.com/upsidr/merge-gatekeeper/tags
+        #       https://github.com/upsidr/merge-gatekeeper/branches
+        uses: upsidr/merge-gatekeeper@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 ```
+<!-- == imptr: basic-yaml / end == -->
 
 <!-- == imptr: example-usage / end == -->
 
@@ -77,9 +79,9 @@ There are some customisation available for Merge Gatekeeper.
 | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------: |
 | `token`    | `GITHUB_TOKEN` or Personal Access Token with `repo` scope                                                                                                                                                                                                                                            |   Yes    |
 | `self`     | The name of Merge Gatekeeper job, and defaults to `merge-gatekeeper`. This is used to check other job status, and do not check Merge Gatekeeper itself. If you updated the GitHub Action job name from `merge-gatekeeper` to something else, you would need to specify the new name with this value. |          |
-| `interval` | Check interval to recheck the job status. Default is set to 30 (sec).                                                                                                                                                                                                                                |          |
+| `interval` | Check interval to recheck the job status. Default is set to 5 (sec).                                                                                                                                                                                                                                 |          |
 | `timeout`  | Timeout setup to give up further check. Default is set to 600 (sec).                                                                                                                                                                                                                                 |          |
-| `ignored`  | Jobs to ignore regardless of their statuses. Defined as a comma-separated list.                                                                                                                                                                                                                                 |          |
+| `ignored`  | Jobs to ignore regardless of their statuses. Defined as a comma-separated list.                                                                                                                                                                                                                      |          |
 | `ref`      | Git ref to check out. This falls back to the HEAD for given PR, but can be set to any ref.                                                                                                                                                                                                           |          |
 
 <!-- == imptr: inputs / end == -->
