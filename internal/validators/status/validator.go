@@ -13,6 +13,7 @@ import (
 const (
 	successState = "success"
 	errorState   = "error"
+	failureState = "failure"
 	pendingState = "pending"
 )
 
@@ -128,7 +129,7 @@ func (sv *statusValidator) Validate(ctx context.Context) (validators.Status, err
 		case successState:
 			st.completeJobs = append(st.completeJobs, ghaStatus.Job)
 			successCnt++
-		case errorState:
+		case errorState, failureState:
 			st.errJobs = append(st.errJobs, ghaStatus.Job)
 		}
 	}
