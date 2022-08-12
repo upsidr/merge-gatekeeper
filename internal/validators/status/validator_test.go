@@ -22,11 +22,6 @@ func TestCreateValidator(t *testing.T) {
 		want    validators.Validator
 		wantErr bool
 	}{
-		"returns Validator when option is empty": {
-			c:       &mock.Client{},
-			want:    nil,
-			wantErr: true,
-		},
 		"returns Validator when option is not empty": {
 			c: &mock.Client{},
 			opts: []Option{
@@ -63,6 +58,36 @@ func TestCreateValidator(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		"returns error when option is empty": {
+			c:       &mock.Client{},
+			want:    nil,
+			wantErr: true,
+		},
+		"returns error when client is nil": {
+			c: nil,
+			opts: []Option{
+				WithGitHubOwnerAndRepo("test", "test-repo"),
+				WithGitHubRef("sha"),
+				WithGitHubRef("sha-01"),
+				WithSelfJob("job"),
+				WithSelfJob("job-01"),
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		"returns error when ignored jobs is an empty string": {
+			c: &mock.Client{},
+			opts: []Option{
+				WithGitHubOwnerAndRepo("test", "test-repo"),
+				WithGitHubRef("sha"),
+				WithGitHubRef("sha-01"),
+				WithSelfJob("job"),
+				WithSelfJob("job-01"),
+				WithIgnoredJobs(","), // Malformed, and causes the error
+			},
+			want:    nil,
+			wantErr: true,
+		},
 	}
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
@@ -73,6 +98,37 @@ func TestCreateValidator(t *testing.T) {
 			}
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("CreateValidator() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestName(t *testing.T) {
+	tests := map[string]struct {
+		c    github.Client
+		opts []Option
+		want string
+	}{
+		"Name returns the correct job name which gets overridden": {
+			c: &mock.Client{},
+			opts: []Option{
+				WithGitHubOwnerAndRepo("test-owner", "test-repo"),
+				WithGitHubRef("sha"),
+				WithSelfJob("job"),
+				WithIgnoredJobs("job-01,job-02"),
+			},
+			want: "job",
+		},
+	}
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			got, err := CreateValidator(tt.c, tt.opts...)
+			if err != nil {
+				t.Errorf("Unexpected error with CreateValidator: %v", err)
+				return
+			}
+			if tt.want != got.Name() {
+				t.Errorf("Job name didn't match, want: %s, got: %v", tt.want, got.Name())
 			}
 		})
 	}
@@ -282,7 +338,7 @@ func Test_statusValidator_Validate(t *testing.T) {
 		},
 		"returns succeeded status and nil when only an ignored job is failing": {
 			selfJobName: "self-job",
-			ignoredJobs: []string{"job-02", "job-03"},
+			ignoredJobs: []string{"job-02  ", "job-03"}, // Some extra space will be trimmed by strings.TrimSpace
 			client: &mock.Client{
 				GetCombinedStatusFunc: func(ctx context.Context, owner, repo, ref string, opts *github.ListOptions) (*github.CombinedStatus, *github.Response, error) {
 					return &github.CombinedStatus{
