@@ -33,6 +33,7 @@ func WithGitHubRef(ref string) Option {
 
 func WithIgnoredJobs(names string) Option {
 	return func(s *statusValidator) {
+		// TODO: Add more input validation, such as "," should not be a valid input.
 		if len(names) != 0 {
 			s.ignoredJobs = strings.Split(names, ",")
 		}
