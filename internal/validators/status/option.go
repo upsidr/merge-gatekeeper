@@ -34,7 +34,13 @@ func WithGitHubRef(ref string) Option {
 func WithIgnoredJobs(names string) Option {
 	return func(s *statusValidator) {
 		if len(names) != 0 {
-			s.ignoredJobs = strings.Split(names, ",")
+			jobs := strings.Split(strings.ReplaceAll(names, "\n", ""), ",")
+
+			for _, job := range jobs {
+				s.ignoredJobs = append(s.ignoredJobs, strings.TrimSpace(job))
+			}
 		}
+
+		fmt.Printf("%v", s.ignoredJobs)
 	}
 }
