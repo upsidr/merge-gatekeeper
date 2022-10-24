@@ -40,7 +40,5 @@ func WithIgnoredJobs(names string) Option {
 				s.ignoredJobs = append(s.ignoredJobs, strings.TrimSpace(job))
 			}
 		}
-
-		fmt.Printf("%v", s.ignoredJobs)
 	}
 }
