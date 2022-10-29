@@ -79,11 +79,6 @@ func (sv *statusValidator) validateFields() error {
 	if len(sv.selfJobName) == 0 {
 		errs = append(errs, errors.New("self job name is empty"))
 	}
-	for _, job := range sv.ignoredJobs {
-		if len(job) == 0 {
-			errs = append(errs, errors.New("ignored job name is empty"))
-		}
-	}
 	if sv.client == nil {
 		errs = append(errs, errors.New("github client is empty"))
 	}

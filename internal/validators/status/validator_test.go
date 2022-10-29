@@ -58,6 +58,26 @@ func TestCreateValidator(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		"returns Validator when invalid string is provided for ignored jobs": {
+			c: &mock.Client{},
+			opts: []Option{
+				WithGitHubOwnerAndRepo("test", "test-repo"),
+				WithGitHubRef("sha"),
+				WithGitHubRef("sha-01"),
+				WithSelfJob("job"),
+				WithSelfJob("job-01"),
+				WithIgnoredJobs(","), // Malformed but handled
+			},
+			want: &statusValidator{
+				client:      &mock.Client{},
+				owner:       "test",
+				repo:        "test-repo",
+				ref:         "sha-01",
+				selfJobName: "job-01",
+				ignoredJobs: []string{}, // Not nil
+			},
+			wantErr: false,
+		},
 		"returns error when option is empty": {
 			c:       &mock.Client{},
 			want:    nil,
@@ -71,19 +91,6 @@ func TestCreateValidator(t *testing.T) {
 				WithGitHubRef("sha-01"),
 				WithSelfJob("job"),
 				WithSelfJob("job-01"),
-			},
-			want:    nil,
-			wantErr: true,
-		},
-		"returns error when ignored jobs is an empty string": {
-			c: &mock.Client{},
-			opts: []Option{
-				WithGitHubOwnerAndRepo("test", "test-repo"),
-				WithGitHubRef("sha"),
-				WithGitHubRef("sha-01"),
-				WithSelfJob("job"),
-				WithSelfJob("job-01"),
-				WithIgnoredJobs(","), // Malformed, and causes the error
 			},
 			want:    nil,
 			wantErr: true,

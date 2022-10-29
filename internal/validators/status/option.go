@@ -43,7 +43,7 @@ func WithIgnoredJobs(names string) Option {
 		for _, s := range ss {
 			jobName := strings.TrimSpace(s)
 			if len(jobName) == 0 {
-				return
+				continue // TODO: Provide more clue to users
 			}
 			jobs = append(jobs, jobName)
 		}
