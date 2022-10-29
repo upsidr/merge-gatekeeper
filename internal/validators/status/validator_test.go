@@ -383,7 +383,7 @@ func Test_statusValidator_Validate(t *testing.T) {
 		},
 		"returns succeeded status and nil when only an ignored job is failing": {
 			selfJobName: "self-job",
-			ignoredJobs: []string{"job-02  ", "job-03"}, // Some extra space will be trimmed by strings.TrimSpace
+			ignoredJobs: []string{"job-02", "job-03"}, // String input here should be already TrimSpace'd
 			client: &mock.Client{
 				GetCombinedStatusFunc: func(ctx context.Context, owner, repo, ref string, opts *github.ListOptions) (*github.CombinedStatus, *github.Response, error) {
 					return &github.CombinedStatus{
