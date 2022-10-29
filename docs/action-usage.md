@@ -35,7 +35,6 @@ curl -sSL https://raw.githubusercontent.com/upsidr/merge-gatekeeper/main/example
 The below is the copy of [`/example/merge-gatekeeper.yml`](/example/merge-gatekeeper.yml), with extra comments.
 
 <!-- == imptr: basic-yaml / begin from: ../example/definitions.yaml#[standard-setup] wrap: yaml == -->
-
 ```yaml
 ---
 name: Merge Gatekeeper
@@ -58,7 +57,6 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 ```
-
 <!-- == imptr: basic-yaml / end == -->
 
 <!-- == export: simple-usage / end == -->
