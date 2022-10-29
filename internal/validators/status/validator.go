@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/upsidr/merge-gatekeeper/internal/github"
 	"github.com/upsidr/merge-gatekeeper/internal/multierror"
@@ -111,7 +112,7 @@ func (sv *statusValidator) Validate(ctx context.Context) (validators.Status, err
 	for _, ghaStatus := range ghaStatuses {
 		var toIgnore bool
 		for _, ignored := range sv.ignoredJobs {
-			if ghaStatus.Job == ignored {
+			if ghaStatus.Job == strings.TrimSpace(ignored) {
 				toIgnore = true
 				break
 			}
