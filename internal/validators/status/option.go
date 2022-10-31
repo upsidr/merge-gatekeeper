@@ -1,6 +1,8 @@
 package status
 
-import "strings"
+import (
+	"strings"
+)
 
 type Option func(s *statusValidator)
 
@@ -35,7 +37,10 @@ func WithIgnoredJobs(names string) Option {
 	return func(s *statusValidator) {
 		// TODO: Add more input validation, such as "," should not be a valid input.
 		if len(names) != 0 {
-			s.ignoredJobs = strings.Split(names, ",")
+			jobs := strings.Split(strings.ReplaceAll(names, "\n", ""), ",")
+			for _, job := range jobs {
+				s.ignoredJobs = append(s.ignoredJobs, strings.TrimSpace(job))
+			}
 		}
 	}
 }
