@@ -147,17 +147,28 @@ func (sv *statusValidator) Validate(ctx context.Context) (validators.Status, err
 }
 
 func (sv *statusValidator) listGhaStatuses(ctx context.Context) ([]*ghaStatus, error) {
-	combined, _, err := sv.client.GetCombinedStatus(ctx, sv.owner, sv.repo, sv.ref, &github.ListOptions{})
-	if err != nil {
-		return nil, err
+	var combined []*github.RepoStatus
+	page := 1
+	for {
+		c, _, err := sv.client.GetCombinedStatus(ctx, sv.owner, sv.repo, sv.ref, &github.ListOptions{PerPage: 100, Page: page})
+		if err != nil {
+			return nil, err
+		}
+
+		combined = append(combined, c.Statuses...)
+
+		if c.GetTotalCount() <= 100 {
+			break
+		}
+		page++
 	}
 
 	// Because multiple jobs with the same name may exist when jobs are created dynamically by third-party tools, etc.,
 	// only the latest job should be managed.
 	currentJobs := make(map[string]struct{})
 
-	ghaStatuses := make([]*ghaStatus, 0, len(combined.Statuses))
-	for _, s := range combined.Statuses {
+	ghaStatuses := make([]*ghaStatus, 0, len(combined))
+	for _, s := range combined {
 		if s.Context == nil || s.State == nil {
 			return nil, fmt.Errorf("%w context: %v, status: %v", ErrInvalidCombinedStatusResponse, s.Context, s.State)
 		}
