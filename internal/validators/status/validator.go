@@ -157,7 +157,7 @@ func (sv *statusValidator) listGhaStatuses(ctx context.Context) ([]*ghaStatus, e
 
 		combined = append(combined, c.Statuses...)
 
-		if c.GetTotalCount() <= 100 {
+		if c.GetTotalCount() < 100 {
 			break
 		}
 		page++
