@@ -28,6 +28,11 @@ const (
 	checkRunSkipConclusion    = "skipped"
 )
 
+const (
+	maxStatusesPerPage  = 100
+	maxCheckRunsPerPage = 100
+)
+
 var (
 	ErrInvalidCombinedStatusResponse = errors.New("github combined status response is invalid")
 	ErrInvalidCheckRunResponse       = errors.New("github checkRun response is invalid")
@@ -146,21 +151,47 @@ func (sv *statusValidator) Validate(ctx context.Context) (validators.Status, err
 	return st, nil
 }
 
-func (sv *statusValidator) listGhaStatuses(ctx context.Context) ([]*ghaStatus, error) {
+func (sv *statusValidator) getCombinedStatus(ctx context.Context) ([]*github.RepoStatus, error) {
 	var combined []*github.RepoStatus
 	page := 1
 	for {
-		c, _, err := sv.client.GetCombinedStatus(ctx, sv.owner, sv.repo, sv.ref, &github.ListOptions{PerPage: 100, Page: page})
+		c, _, err := sv.client.GetCombinedStatus(ctx, sv.owner, sv.repo, sv.ref, &github.ListOptions{PerPage: maxStatusesPerPage, Page: page})
 		if err != nil {
 			return nil, err
 		}
-
 		combined = append(combined, c.Statuses...)
-
-		if c.GetTotalCount() < 100 {
+		if c.GetTotalCount() < maxStatusesPerPage {
 			break
 		}
 		page++
+	}
+	return combined, nil
+}
+
+func (sv *statusValidator) listCheckRunsForRef(ctx context.Context) ([]*github.CheckRun, error) {
+	var runResults []*github.CheckRun
+	page := 1
+	for {
+		cr, _, err := sv.client.ListCheckRunsForRef(ctx, sv.owner, sv.repo, sv.ref, &github.ListCheckRunsOptions{ListOptions: github.ListOptions{
+			Page:    page,
+			PerPage: maxCheckRunsPerPage,
+		}})
+		if err != nil {
+			return nil, err
+		}
+		runResults = append(runResults, cr.CheckRuns...)
+		if cr.GetTotal() < maxCheckRunsPerPage {
+			break
+		}
+		page++
+	}
+	return runResults, nil
+}
+
+func (sv *statusValidator) listGhaStatuses(ctx context.Context) ([]*ghaStatus, error) {
+	combined, err := sv.getCombinedStatus(ctx)
+	if err != nil {
+		return nil, err
 	}
 
 	// Because multiple jobs with the same name may exist when jobs are created dynamically by third-party tools, etc.,
@@ -183,12 +214,12 @@ func (sv *statusValidator) listGhaStatuses(ctx context.Context) ([]*ghaStatus, e
 		})
 	}
 
-	runResult, _, err := sv.client.ListCheckRunsForRef(ctx, sv.owner, sv.repo, sv.ref, &github.ListCheckRunsOptions{})
+	runResults, err := sv.listCheckRunsForRef(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	for _, run := range runResult.CheckRuns {
+	for _, run := range runResults {
 		if run.Name == nil || run.Status == nil {
 			return nil, fmt.Errorf("%w name: %v, status: %v", ErrInvalidCheckRunResponse, run.Name, run.Status)
 		}

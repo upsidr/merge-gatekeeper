@@ -16,6 +16,13 @@ func stringPtr(str string) *string {
 	return &str
 }
 
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
 func TestCreateValidator(t *testing.T) {
 	tests := map[string]struct {
 		c       github.Client
@@ -753,13 +760,21 @@ func Test_statusValidator_listStatues(t *testing.T) {
 
 			c := &mock.Client{
 				GetCombinedStatusFunc: func(ctx context.Context, owner, repo, ref string, opts *github.ListOptions) (*github.CombinedStatus, *github.Response, error) {
+					max := min(opts.Page*opts.PerPage, len(statuses))
+					sts := statuses[(opts.Page-1)*opts.PerPage : max]
+					l := len(sts)
 					return &github.CombinedStatus{
-						Statuses: statuses,
+						Statuses:   sts,
+						TotalCount: &l,
 					}, nil, nil
 				},
 				ListCheckRunsForRefFunc: func(ctx context.Context, owner, repo, ref string, opts *github.ListCheckRunsOptions) (*github.ListCheckRunsResults, *github.Response, error) {
+					max := min(opts.ListOptions.Page*opts.ListOptions.PerPage, len(checkRuns))
+					sts := checkRuns[(opts.ListOptions.Page-1)*opts.ListOptions.PerPage : max]
+					l := len(sts)
 					return &github.ListCheckRunsResults{
 						CheckRuns: checkRuns,
+						Total:     &l,
 					}, nil, nil
 				},
 			}
@@ -800,13 +815,21 @@ func Test_statusValidator_listStatues(t *testing.T) {
 
 			c := &mock.Client{
 				GetCombinedStatusFunc: func(ctx context.Context, owner, repo, ref string, opts *github.ListOptions) (*github.CombinedStatus, *github.Response, error) {
+					max := min(opts.Page*opts.PerPage, len(statuses))
+					sts := statuses[(opts.Page-1)*opts.PerPage : max]
+					l := len(sts)
 					return &github.CombinedStatus{
-						Statuses: statuses[(opts.Page-1)*opts.PerPage : opts.Page*opts.PerPage],
+						Statuses:   sts,
+						TotalCount: &l,
 					}, nil, nil
 				},
 				ListCheckRunsForRefFunc: func(ctx context.Context, owner, repo, ref string, opts *github.ListCheckRunsOptions) (*github.ListCheckRunsResults, *github.Response, error) {
+					max := min(opts.ListOptions.Page*opts.ListOptions.PerPage, len(checkRuns))
+					sts := checkRuns[(opts.ListOptions.Page-1)*opts.ListOptions.PerPage : max]
+					l := len(sts)
 					return &github.ListCheckRunsResults{
 						CheckRuns: checkRuns,
+						Total:     &l,
 					}, nil, nil
 				},
 			}
@@ -847,13 +870,21 @@ func Test_statusValidator_listStatues(t *testing.T) {
 
 			c := &mock.Client{
 				GetCombinedStatusFunc: func(ctx context.Context, owner, repo, ref string, opts *github.ListOptions) (*github.CombinedStatus, *github.Response, error) {
+					max := min(opts.Page*opts.PerPage, len(statuses))
+					sts := statuses[(opts.Page-1)*opts.PerPage : max]
+					l := len(sts)
 					return &github.CombinedStatus{
-						Statuses: statuses[(opts.Page-1)*opts.PerPage : opts.Page*opts.PerPage],
+						Statuses:   sts,
+						TotalCount: &l,
 					}, nil, nil
 				},
 				ListCheckRunsForRefFunc: func(ctx context.Context, owner, repo, ref string, opts *github.ListCheckRunsOptions) (*github.ListCheckRunsResults, *github.Response, error) {
+					max := min(opts.ListOptions.Page*opts.ListOptions.PerPage, len(checkRuns))
+					sts := checkRuns[(opts.ListOptions.Page-1)*opts.ListOptions.PerPage : max]
+					l := len(sts)
 					return &github.ListCheckRunsResults{
 						CheckRuns: checkRuns,
+						Total:     &l,
 					}, nil, nil
 				},
 			}
