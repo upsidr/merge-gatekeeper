@@ -6,11 +6,12 @@ type status struct {
 	totalJobs    []string
 	completeJobs []string
 	errJobs      []string
+	ignoredJobs  []string
 	succeeded    bool
 }
 
 func (s *status) Detail() string {
-	return fmt.Sprintf(
+	result := fmt.Sprintf(
 		`%d out of %d
 
   Total job count:     %d
@@ -25,6 +26,16 @@ func (s *status) Detail() string {
 		len(s.completeJobs), s.completeJobs,
 		len(s.errJobs), s.errJobs,
 	)
+
+	if len(s.ignoredJobs) > 0 {
+		result = fmt.Sprintf(
+			`%s
+
+  --
+  Ignored jobs: %+q`, result, s.ignoredJobs)
+	}
+
+	return result
 }
 
 func (s *status) IsSuccess() bool {
