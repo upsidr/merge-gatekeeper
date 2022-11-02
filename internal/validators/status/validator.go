@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/upsidr/merge-gatekeeper/internal/github"
 	"github.com/upsidr/merge-gatekeeper/internal/multierror"
@@ -79,11 +78,6 @@ func (sv *statusValidator) validateFields() error {
 	if len(sv.selfJobName) == 0 {
 		errs = append(errs, errors.New("self job name is empty"))
 	}
-	for _, job := range sv.ignoredJobs {
-		if len(job) == 0 {
-			errs = append(errs, errors.New("ignored job name is empty"))
-		}
-	}
 	if sv.client == nil {
 		errs = append(errs, errors.New("github client is empty"))
 	}
@@ -112,7 +106,7 @@ func (sv *statusValidator) Validate(ctx context.Context) (validators.Status, err
 	for _, ghaStatus := range ghaStatuses {
 		var toIgnore bool
 		for _, ignored := range sv.ignoredJobs {
-			if ghaStatus.Job == strings.TrimSpace(ignored) {
+			if ghaStatus.Job == ignored {
 				toIgnore = true
 				break
 			}
