@@ -3,6 +3,7 @@ package status
 import (
 	"context"
 	"errors"
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -13,6 +14,13 @@ import (
 
 func stringPtr(str string) *string {
 	return &str
+}
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
 }
 
 func TestCreateValidator(t *testing.T) {
@@ -732,6 +740,171 @@ func Test_statusValidator_listStatues(t *testing.T) {
 						State: errorState,
 					},
 				},
+			}
+		}(),
+		"succeeds to retrieve 100 statuses": func() test {
+			num_statuses := 100
+			statuses := make([]*github.RepoStatus, num_statuses)
+			checkRuns := make([]*github.CheckRun, num_statuses)
+			expectedGhaStatuses := make([]*ghaStatus, num_statuses)
+			for i := 0; i < num_statuses; i++ {
+				statuses[i] = &github.RepoStatus{
+					Context: stringPtr(fmt.Sprintf("job-%d", i)),
+					State:   stringPtr(successState),
+				}
+
+				checkRuns[i] = &github.CheckRun{
+					Name:       stringPtr(fmt.Sprintf("job-%d", i)),
+					Status:     stringPtr(checkRunCompletedStatus),
+					Conclusion: stringPtr(checkRunNeutralConclusion),
+				}
+
+				expectedGhaStatuses[i] = &ghaStatus{
+					Job:   fmt.Sprintf("job-%d", i),
+					State: successState,
+				}
+			}
+
+			c := &mock.Client{
+				GetCombinedStatusFunc: func(ctx context.Context, owner, repo, ref string, opts *github.ListOptions) (*github.CombinedStatus, *github.Response, error) {
+					max := min(opts.Page*opts.PerPage, len(statuses))
+					sts := statuses[(opts.Page-1)*opts.PerPage : max]
+					l := len(sts)
+					return &github.CombinedStatus{
+						Statuses:   sts,
+						TotalCount: &l,
+					}, nil, nil
+				},
+				ListCheckRunsForRefFunc: func(ctx context.Context, owner, repo, ref string, opts *github.ListCheckRunsOptions) (*github.ListCheckRunsResults, *github.Response, error) {
+					max := min(opts.ListOptions.Page*opts.ListOptions.PerPage, len(checkRuns))
+					sts := checkRuns[(opts.ListOptions.Page-1)*opts.ListOptions.PerPage : max]
+					l := len(sts)
+					return &github.ListCheckRunsResults{
+						CheckRuns: checkRuns,
+						Total:     &l,
+					}, nil, nil
+				},
+			}
+			return test{
+				fields: fields{
+					client:      c,
+					selfJobName: "self-job",
+					owner:       "test-owner",
+					repo:        "test-repo",
+					ref:         "main",
+				},
+				wantErr: false,
+				want:    expectedGhaStatuses,
+			}
+		}(),
+		"succeeds to retrieve 162 statuses": func() test {
+			num_statuses := 162
+			statuses := make([]*github.RepoStatus, num_statuses)
+			checkRuns := make([]*github.CheckRun, num_statuses)
+			expectedGhaStatuses := make([]*ghaStatus, num_statuses)
+			for i := 0; i < num_statuses; i++ {
+				statuses[i] = &github.RepoStatus{
+					Context: stringPtr(fmt.Sprintf("job-%d", i)),
+					State:   stringPtr(successState),
+				}
+
+				checkRuns[i] = &github.CheckRun{
+					Name:       stringPtr(fmt.Sprintf("job-%d", i)),
+					Status:     stringPtr(checkRunCompletedStatus),
+					Conclusion: stringPtr(checkRunNeutralConclusion),
+				}
+
+				expectedGhaStatuses[i] = &ghaStatus{
+					Job:   fmt.Sprintf("job-%d", i),
+					State: successState,
+				}
+			}
+
+			c := &mock.Client{
+				GetCombinedStatusFunc: func(ctx context.Context, owner, repo, ref string, opts *github.ListOptions) (*github.CombinedStatus, *github.Response, error) {
+					max := min(opts.Page*opts.PerPage, len(statuses))
+					sts := statuses[(opts.Page-1)*opts.PerPage : max]
+					l := len(sts)
+					return &github.CombinedStatus{
+						Statuses:   sts,
+						TotalCount: &l,
+					}, nil, nil
+				},
+				ListCheckRunsForRefFunc: func(ctx context.Context, owner, repo, ref string, opts *github.ListCheckRunsOptions) (*github.ListCheckRunsResults, *github.Response, error) {
+					max := min(opts.ListOptions.Page*opts.ListOptions.PerPage, len(checkRuns))
+					sts := checkRuns[(opts.ListOptions.Page-1)*opts.ListOptions.PerPage : max]
+					l := len(sts)
+					return &github.ListCheckRunsResults{
+						CheckRuns: checkRuns,
+						Total:     &l,
+					}, nil, nil
+				},
+			}
+			return test{
+				fields: fields{
+					client:      c,
+					selfJobName: "self-job",
+					owner:       "test-owner",
+					repo:        "test-repo",
+					ref:         "main",
+				},
+				wantErr: false,
+				want:    expectedGhaStatuses,
+			}
+		}(),
+		"succeeds to retrieve 587 statuses": func() test {
+			num_statuses := 587
+			statuses := make([]*github.RepoStatus, num_statuses)
+			checkRuns := make([]*github.CheckRun, num_statuses)
+			expectedGhaStatuses := make([]*ghaStatus, num_statuses)
+			for i := 0; i < num_statuses; i++ {
+				statuses[i] = &github.RepoStatus{
+					Context: stringPtr(fmt.Sprintf("job-%d", i)),
+					State:   stringPtr(successState),
+				}
+
+				checkRuns[i] = &github.CheckRun{
+					Name:       stringPtr(fmt.Sprintf("job-%d", i)),
+					Status:     stringPtr(checkRunCompletedStatus),
+					Conclusion: stringPtr(checkRunNeutralConclusion),
+				}
+
+				expectedGhaStatuses[i] = &ghaStatus{
+					Job:   fmt.Sprintf("job-%d", i),
+					State: successState,
+				}
+			}
+
+			c := &mock.Client{
+				GetCombinedStatusFunc: func(ctx context.Context, owner, repo, ref string, opts *github.ListOptions) (*github.CombinedStatus, *github.Response, error) {
+					max := min(opts.Page*opts.PerPage, len(statuses))
+					sts := statuses[(opts.Page-1)*opts.PerPage : max]
+					l := len(sts)
+					return &github.CombinedStatus{
+						Statuses:   sts,
+						TotalCount: &l,
+					}, nil, nil
+				},
+				ListCheckRunsForRefFunc: func(ctx context.Context, owner, repo, ref string, opts *github.ListCheckRunsOptions) (*github.ListCheckRunsResults, *github.Response, error) {
+					max := min(opts.ListOptions.Page*opts.ListOptions.PerPage, len(checkRuns))
+					sts := checkRuns[(opts.ListOptions.Page-1)*opts.ListOptions.PerPage : max]
+					l := len(sts)
+					return &github.ListCheckRunsResults{
+						CheckRuns: checkRuns,
+						Total:     &l,
+					}, nil, nil
+				},
+			}
+			return test{
+				fields: fields{
+					client:      c,
+					selfJobName: "self-job",
+					owner:       "test-owner",
+					repo:        "test-repo",
+					ref:         "main",
+				},
+				wantErr: false,
+				want:    expectedGhaStatuses,
 			}
 		}(),
 	}
