@@ -74,4 +74,6 @@ Create a YAML file with just a single Importer Marker:
 
 With that, you can simply run `importer update FILENAME` to get the latest spec. You can also update the file used to specific branch or version.
 
-###
+### Use with matrix strategy
+
+Merge Gatekeeper supports the use of matrix strategy. If any of the job fails, Merge Gatekeeper will also fail. In case of a complex matrix setup where one entry is not going to be needed, you may need to tweak Merge Gatekeeper spec to ignore some errors.
