@@ -3,7 +3,7 @@ module github.com/upsidr/merge-gatekeeper
 go 1.19
 
 require (
-	github.com/google/go-github/v38 v38.1.0
+	github.com/google/go-github/v48 v48.1.0
 	github.com/spf13/cobra v1.6.1
 	golang.org/x/oauth2 v0.2.0
 )
