@@ -104,8 +104,11 @@ func (sv *statusValidator) Validate(ctx context.Context) (validators.Status, err
 		totalJobs:    make([]string, 0, len(ghaStatuses)),
 		completeJobs: make([]string, 0, len(ghaStatuses)),
 		errJobs:      make([]string, 0, len(ghaStatuses)/2),
+		ignoredJobs:  make([]string, 0, len(ghaStatuses)),
 		succeeded:    true,
 	}
+
+	st.ignoredJobs = append(st.ignoredJobs, sv.ignoredJobs...)
 
 	var successCnt int
 	for _, ghaStatus := range ghaStatuses {

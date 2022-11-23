@@ -184,6 +184,7 @@ func Test_statusValidator_Validate(t *testing.T) {
 				succeeded:    true,
 				totalJobs:    []string{},
 				completeJobs: []string{},
+				ignoredJobs:  []string{},
 				errJobs:      []string{},
 			},
 		},
@@ -209,6 +210,7 @@ func Test_statusValidator_Validate(t *testing.T) {
 				succeeded:    true,
 				totalJobs:    []string{},
 				completeJobs: []string{},
+				ignoredJobs:  []string{},
 				errJobs:      []string{},
 			},
 		},
@@ -233,6 +235,7 @@ func Test_statusValidator_Validate(t *testing.T) {
 				succeeded:    false,
 				totalJobs:    []string{"job"},
 				completeJobs: []string{},
+				ignoredJobs:  []string{},
 				errJobs:      []string{},
 			},
 		},
@@ -272,6 +275,7 @@ func Test_statusValidator_Validate(t *testing.T) {
 				errJobs: []string{
 					"job-02",
 				},
+				ignoredJobs: []string{},
 			}).Detail(),
 		},
 		"returns error when there is a failed job with failure state": {
@@ -310,6 +314,7 @@ func Test_statusValidator_Validate(t *testing.T) {
 				errJobs: []string{
 					"job-02",
 				},
+				ignoredJobs: []string{},
 			}).Detail(),
 		},
 		"returns failed status and nil when successful job count is less than total": {
@@ -347,7 +352,8 @@ func Test_statusValidator_Validate(t *testing.T) {
 				completeJobs: []string{
 					"job-01",
 				},
-				errJobs: []string{},
+				errJobs:     []string{},
+				ignoredJobs: []string{},
 			},
 		},
 		"returns succeeded status and nil when validation is success": {
@@ -386,7 +392,8 @@ func Test_statusValidator_Validate(t *testing.T) {
 					"job-01",
 					"job-02",
 				},
-				errJobs: []string{},
+				errJobs:     []string{},
+				ignoredJobs: []string{},
 			},
 		},
 		"returns succeeded status and nil when only an ignored job is failing": {
@@ -421,6 +428,7 @@ func Test_statusValidator_Validate(t *testing.T) {
 				totalJobs:    []string{"job-01"},
 				completeJobs: []string{"job-01"},
 				errJobs:      []string{},
+				ignoredJobs:  []string{"job-02", "job-03"},
 			},
 		},
 		"returns succeeded status and nil when only an ignored job is failing, with failure state": {
@@ -455,6 +463,7 @@ func Test_statusValidator_Validate(t *testing.T) {
 				totalJobs:    []string{"job-01"},
 				completeJobs: []string{"job-01"},
 				errJobs:      []string{},
+				ignoredJobs:  []string{"job-02", "job-03"},
 			},
 		},
 	}
