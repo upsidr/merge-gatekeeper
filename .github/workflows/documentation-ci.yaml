@@ -11,15 +11,21 @@ on:
 jobs:
   importer:
     name: Run Importer Generate for Markdowns
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Check out
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
 
+      - name: Setup Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: ">=1.18.0"
+          check-latest: true
+
       - name: Install Importer
-        run: brew install upsidr/tap/importer
+        run: go install github.com/upsidr/importer/cmd/importer@v0.1.4
 
       - name: Run Importer against all *.md files
         run: find . -name '*.md' -exec importer update {} \;
