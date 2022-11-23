@@ -11,7 +11,7 @@ on:
 jobs:
   importer:
     name: Run Importer Generate for Markdowns
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
       - name: Check out
         uses: actions/checkout@v2
