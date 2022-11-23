@@ -13,6 +13,8 @@ WORKDIR ${GOPATH}/src/github.com/${ORG}/${REPO}
 
 COPY . .
 
+RUN go mod vendor
+
 RUN CGO_ENABLED=0 go build ./cmd/merge-gatekeeper \
     && mv merge-gatekeeper /go/bin/
 
