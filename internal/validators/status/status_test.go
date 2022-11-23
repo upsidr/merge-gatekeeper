@@ -25,12 +25,33 @@ func Test_status_Detail(t *testing.T) {
 			},
 			want: `1 out of 3
 
-  Total job count:     3
-    jobs: ["job-1" "job-2" "job-3"]
-  Completed job count: 1
-    jobs: ["job-2"]
-  Failed job count:    1
-    jobs: ["job-3"]
+Total job count:       3
+Completed job count:   1
+Incompleted job count: 1
+Failed job count:      1
+Ignored job count:     0
+
+::group::Failed jobs
+- job-3
+::endgroup::
+
+::group::Completed jobs
+- job-2
+::endgroup::
+
+::group::Incomplete jobs
+- job-1
+::endgroup::
+
+::group::Ignored jobs
+[]
+::endgroup::
+
+::group::All jobs
+- job-1
+- job-2
+- job-3
+::endgroup::
 `,
 		},
 		"return detail with ignored jobs input": {
@@ -54,16 +75,36 @@ func Test_status_Detail(t *testing.T) {
 			},
 			want: `2 out of 4
 
-  Total job count:     4
-    jobs: ["job-1" "job-2" "job-3" "job-4"]
-  Completed job count: 2
-    jobs: ["job-2" "job-4"]
-  Failed job count:    1
-    jobs: ["job-3"]
+Total job count:       4
+Completed job count:   2
+Incompleted job count: 1
+Failed job count:      1
+Ignored job count:     1
 
+::group::Failed jobs
+- job-3
+::endgroup::
 
-  --
-  Ignored jobs: ["job-4"]`,
+::group::Completed jobs
+- job-2
+- job-4
+::endgroup::
+
+::group::Incomplete jobs
+- job-1
+::endgroup::
+
+::group::Ignored jobs
+- job-4
+::endgroup::
+
+::group::All jobs
+- job-1
+- job-2
+- job-3
+- job-4
+::endgroup::
+`,
 		},
 		"return detail when totalJobs and completeJobs is empty": {
 			s: &status{
@@ -72,12 +113,31 @@ func Test_status_Detail(t *testing.T) {
 			},
 			want: `0 out of 0
 
-  Total job count:     0
-    jobs: []
-  Completed job count: 0
-    jobs: []
-  Failed job count:    0
-    jobs: []
+Total job count:       0
+Completed job count:   0
+Incompleted job count: 0
+Failed job count:      0
+Ignored job count:     0
+
+::group::Failed jobs
+[]
+::endgroup::
+
+::group::Completed jobs
+[]
+::endgroup::
+
+::group::Incomplete jobs
+[]
+::endgroup::
+
+::group::Ignored jobs
+[]
+::endgroup::
+
+::group::All jobs
+[]
+::endgroup::
 `,
 		},
 	}
