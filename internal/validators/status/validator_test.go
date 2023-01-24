@@ -7,6 +7,9 @@ import (
 	"reflect"
 	"testing"
 
+	realGithub "github.com/google/go-github/v38/github"
+	mockGithub "github.com/migueleliasweb/go-github-mock/src/mock"
+
 	"github.com/upsidr/merge-gatekeeper/internal/github"
 	"github.com/upsidr/merge-gatekeeper/internal/github/mock"
 	"github.com/upsidr/merge-gatekeeper/internal/validators"
@@ -14,6 +17,10 @@ import (
 
 func stringPtr(str string) *string {
 	return &str
+}
+
+func intPtr(value int) *int {
+	return &value
 }
 
 func min(a, b int) int {
@@ -491,7 +498,7 @@ func Test_statusValidator_Validate(t *testing.T) {
 	}
 }
 
-func Test_statusValidator_listStatues(t *testing.T) {
+func Test_statusValidator_listStatuses(t *testing.T) {
 	type fields struct {
 		repo        string
 		owner       string
@@ -939,5 +946,56 @@ func Test_statusValidator_listStatues(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestListCheckRunsForRefHandlesPagination(t *testing.T) {
+	// create a page and a half of check runs that will be returned by the stubbed API
+	numCheckRuns := int(float64(MaxCheckRunsPerPage) * 1.5)
+	checkRuns := make([]*github.CheckRun, numCheckRuns)
+
+	for i := 0; i < numCheckRuns; i++ {
+		checkRuns[i] = &github.CheckRun{
+			Name: stringPtr(fmt.Sprintf("check-%d", i)),
+		}
+	}
+
+	firstPage := checkRuns[0:MaxCheckRunsPerPage]
+	secondPage := checkRuns[MaxCheckRunsPerPage : MaxCheckRunsPerPage+(MaxCheckRunsPerPage/2)]
+
+	// the first mocked request will return a full page of check runs, the second request will return a half page
+	mockedGHClient := mockGithub.NewMockedHTTPClient(
+		mockGithub.WithRequestMatch(
+			mockGithub.GetReposCommitsCheckRunsByOwnerByRepoByRef,
+			github.ListCheckRunsResults{
+				Total:     intPtr(numCheckRuns),
+				CheckRuns: firstPage,
+			},
+			github.ListCheckRunsResults{
+				Total:     intPtr(numCheckRuns),
+				CheckRuns: secondPage,
+			},
+		),
+	)
+
+	c := realGithub.NewClient(mockedGHClient)
+	gh := github.NewTestClient(c)
+
+	sv := &statusValidator{
+		repo:        "test",
+		owner:       "test",
+		ref:         "test",
+		selfJobName: "test",
+		ignoredJobs: []string{},
+		client:      gh,
+	}
+
+	res, err := sv.listCheckRunsForRef(context.Background())
+	if err != nil {
+		t.Errorf("listCheckRunsForRef error = %v", err)
+	}
+
+	if len(res) != numCheckRuns {
+		t.Errorf("Got %v check runs, wanted %v", len(res), numCheckRuns)
 	}
 }
