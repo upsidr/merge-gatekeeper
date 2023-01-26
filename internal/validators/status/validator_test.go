@@ -16,10 +16,6 @@ func stringPtr(str string) *string {
 	return &str
 }
 
-func intPtr(value int) *int {
-	return &value
-}
-
 func min(a, b int) int {
 	if a < b {
 		return a
