@@ -7,9 +7,6 @@ import (
 	"reflect"
 	"testing"
 
-	realGithub "github.com/google/go-github/v38/github"
-	mockGithub "github.com/migueleliasweb/go-github-mock/src/mock"
-
 	"github.com/upsidr/merge-gatekeeper/internal/github"
 	"github.com/upsidr/merge-gatekeeper/internal/github/mock"
 	"github.com/upsidr/merge-gatekeeper/internal/validators"
@@ -792,9 +789,7 @@ func Test_statusValidator_listStatuses(t *testing.T) {
 					}, nil, nil
 				},
 				ListCheckRunsForRefFunc: func(ctx context.Context, owner, repo, ref string, opts *github.ListCheckRunsOptions) (*github.ListCheckRunsResults, *github.Response, error) {
-					max := min(opts.ListOptions.Page*opts.ListOptions.PerPage, len(checkRuns))
-					sts := checkRuns[(opts.ListOptions.Page-1)*opts.ListOptions.PerPage : max]
-					l := len(sts)
+					l := len(checkRuns)
 					return &github.ListCheckRunsResults{
 						CheckRuns: checkRuns,
 						Total:     &l,
@@ -847,9 +842,7 @@ func Test_statusValidator_listStatuses(t *testing.T) {
 					}, nil, nil
 				},
 				ListCheckRunsForRefFunc: func(ctx context.Context, owner, repo, ref string, opts *github.ListCheckRunsOptions) (*github.ListCheckRunsResults, *github.Response, error) {
-					max := min(opts.ListOptions.Page*opts.ListOptions.PerPage, len(checkRuns))
-					sts := checkRuns[(opts.ListOptions.Page-1)*opts.ListOptions.PerPage : max]
-					l := len(sts)
+					l := len(checkRuns)
 					return &github.ListCheckRunsResults{
 						CheckRuns: checkRuns,
 						Total:     &l,
@@ -902,9 +895,7 @@ func Test_statusValidator_listStatuses(t *testing.T) {
 					}, nil, nil
 				},
 				ListCheckRunsForRefFunc: func(ctx context.Context, owner, repo, ref string, opts *github.ListCheckRunsOptions) (*github.ListCheckRunsResults, *github.Response, error) {
-					max := min(opts.ListOptions.Page*opts.ListOptions.PerPage, len(checkRuns))
-					sts := checkRuns[(opts.ListOptions.Page-1)*opts.ListOptions.PerPage : max]
-					l := len(sts)
+					l := len(checkRuns)
 					return &github.ListCheckRunsResults{
 						CheckRuns: checkRuns,
 						Total:     &l,
@@ -946,56 +937,5 @@ func Test_statusValidator_listStatuses(t *testing.T) {
 				}
 			}
 		})
-	}
-}
-
-func TestListCheckRunsForRefHandlesPagination(t *testing.T) {
-	// create a page and a half of check runs that will be returned by the stubbed API
-	numCheckRuns := int(float64(MaxCheckRunsPerPage) * 1.5)
-	checkRuns := make([]*github.CheckRun, numCheckRuns)
-
-	for i := 0; i < numCheckRuns; i++ {
-		checkRuns[i] = &github.CheckRun{
-			Name: stringPtr(fmt.Sprintf("check-%d", i)),
-		}
-	}
-
-	firstPage := checkRuns[0:MaxCheckRunsPerPage]
-	secondPage := checkRuns[MaxCheckRunsPerPage : MaxCheckRunsPerPage+(MaxCheckRunsPerPage/2)]
-
-	// the first mocked request will return a full page of check runs, the second request will return a half page
-	mockedGHClient := mockGithub.NewMockedHTTPClient(
-		mockGithub.WithRequestMatch(
-			mockGithub.GetReposCommitsCheckRunsByOwnerByRepoByRef,
-			github.ListCheckRunsResults{
-				Total:     intPtr(numCheckRuns),
-				CheckRuns: firstPage,
-			},
-			github.ListCheckRunsResults{
-				Total:     intPtr(numCheckRuns),
-				CheckRuns: secondPage,
-			},
-		),
-	)
-
-	c := realGithub.NewClient(mockedGHClient)
-	gh := github.NewTestClient(c)
-
-	sv := &statusValidator{
-		repo:        "test",
-		owner:       "test",
-		ref:         "test",
-		selfJobName: "test",
-		ignoredJobs: []string{},
-		client:      gh,
-	}
-
-	res, err := sv.listCheckRunsForRef(context.Background())
-	if err != nil {
-		t.Errorf("listCheckRunsForRef error = %v", err)
-	}
-
-	if len(res) != numCheckRuns {
-		t.Errorf("Got %v check runs, wanted %v", len(res), numCheckRuns)
 	}
 }

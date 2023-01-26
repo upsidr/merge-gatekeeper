@@ -29,12 +29,6 @@ type client struct {
 	ghc *github.Client
 }
 
-func NewTestClient(c *github.Client) Client {
-	return &client{
-		ghc: c,
-	}
-}
-
 func NewClient(ctx context.Context, token string) Client {
 	return &client{
 		ghc: github.NewClient(oauth2.NewClient(ctx, oauth2.StaticTokenSource(

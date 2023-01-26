@@ -27,10 +27,9 @@ const (
 	checkRunSkipConclusion    = "skipped"
 )
 
-const MaxCheckRunsPerPage int = 100
-
 const (
-	maxStatusesPerPage = 100
+	maxStatusesPerPage  = 100
+	maxCheckRunsPerPage = 100
 )
 
 var (
@@ -172,13 +171,13 @@ func (sv *statusValidator) listCheckRunsForRef(ctx context.Context) ([]*github.C
 	for {
 		cr, _, err := sv.client.ListCheckRunsForRef(ctx, sv.owner, sv.repo, sv.ref, &github.ListCheckRunsOptions{ListOptions: github.ListOptions{
 			Page:    page,
-			PerPage: MaxCheckRunsPerPage,
+			PerPage: maxCheckRunsPerPage,
 		}})
 		if err != nil {
 			return nil, err
 		}
 		runResults = append(runResults, cr.CheckRuns...)
-		if cr.GetTotal() < (MaxCheckRunsPerPage * page) {
+		if cr.GetTotal() < (maxCheckRunsPerPage * page) {
 			break
 		}
 		page++
