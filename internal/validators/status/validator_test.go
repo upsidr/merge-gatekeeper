@@ -491,7 +491,7 @@ func Test_statusValidator_Validate(t *testing.T) {
 	}
 }
 
-func Test_statusValidator_listStatues(t *testing.T) {
+func Test_statusValidator_listStatuses(t *testing.T) {
 	type fields struct {
 		repo        string
 		owner       string
@@ -785,9 +785,7 @@ func Test_statusValidator_listStatues(t *testing.T) {
 					}, nil, nil
 				},
 				ListCheckRunsForRefFunc: func(ctx context.Context, owner, repo, ref string, opts *github.ListCheckRunsOptions) (*github.ListCheckRunsResults, *github.Response, error) {
-					max := min(opts.ListOptions.Page*opts.ListOptions.PerPage, len(checkRuns))
-					sts := checkRuns[(opts.ListOptions.Page-1)*opts.ListOptions.PerPage : max]
-					l := len(sts)
+					l := len(checkRuns)
 					return &github.ListCheckRunsResults{
 						CheckRuns: checkRuns,
 						Total:     &l,
@@ -840,9 +838,7 @@ func Test_statusValidator_listStatues(t *testing.T) {
 					}, nil, nil
 				},
 				ListCheckRunsForRefFunc: func(ctx context.Context, owner, repo, ref string, opts *github.ListCheckRunsOptions) (*github.ListCheckRunsResults, *github.Response, error) {
-					max := min(opts.ListOptions.Page*opts.ListOptions.PerPage, len(checkRuns))
-					sts := checkRuns[(opts.ListOptions.Page-1)*opts.ListOptions.PerPage : max]
-					l := len(sts)
+					l := len(checkRuns)
 					return &github.ListCheckRunsResults{
 						CheckRuns: checkRuns,
 						Total:     &l,
@@ -895,9 +891,7 @@ func Test_statusValidator_listStatues(t *testing.T) {
 					}, nil, nil
 				},
 				ListCheckRunsForRefFunc: func(ctx context.Context, owner, repo, ref string, opts *github.ListCheckRunsOptions) (*github.ListCheckRunsResults, *github.Response, error) {
-					max := min(opts.ListOptions.Page*opts.ListOptions.PerPage, len(checkRuns))
-					sts := checkRuns[(opts.ListOptions.Page-1)*opts.ListOptions.PerPage : max]
-					l := len(sts)
+					l := len(checkRuns)
 					return &github.ListCheckRunsResults{
 						CheckRuns: checkRuns,
 						Total:     &l,

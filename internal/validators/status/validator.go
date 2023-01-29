@@ -177,7 +177,7 @@ func (sv *statusValidator) listCheckRunsForRef(ctx context.Context) ([]*github.C
 			return nil, err
 		}
 		runResults = append(runResults, cr.CheckRuns...)
-		if cr.GetTotal() < maxCheckRunsPerPage {
+		if cr.GetTotal() <= len(runResults) {
 			break
 		}
 		page++
