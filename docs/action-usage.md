@@ -48,6 +48,11 @@ on:
 jobs:
   merge-gatekeeper:
     runs-on: ubuntu-latest
+    # Restrict permissions of the GITHUB_TOKEN.
+    # Docs: https://docs.github.com/en/actions/using-jobs/assigning-permissions-to-jobs
+    permissions:
+      checks: read
+      statuses: read
     steps:
       - name: Run Merge Gatekeeper
         # NOTE: v1 is updated to reflect the latest v1.x.y. Please use any tag/branch that suits your needs:
