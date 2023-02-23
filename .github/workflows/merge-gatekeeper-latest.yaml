@@ -9,6 +9,9 @@ on:
 jobs:
   merge-gatekeeper:
     runs-on: ubuntu-latest
+    permissions:
+      checks: read
+      statuses: read
     steps:
       - name: Check out
         uses: actions/checkout@v2
