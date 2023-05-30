@@ -3,6 +3,7 @@ package cli
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -25,6 +26,7 @@ var (
 	validateInvalSecond uint
 	selfJobName         string
 	ignoredJobs         string
+	githubClientRetry   int
 )
 
 func validateCmd() *cobra.Command {
@@ -45,7 +47,12 @@ func validateCmd() *cobra.Command {
 				return fmt.Errorf("github owner or repository is empty. owner: %s, repository: %s", owner, repo)
 			}
 
-			statusValidator, err := status.CreateValidator(github.NewClient(ctx, ghToken),
+			t := http.DefaultTransport
+			if githubClientRetry > 0 {
+				t = github.NewRetryTransport(githubClientRetry)
+			}
+			statusValidator, err := status.CreateValidator(
+				github.NewClient(ctx, ghToken, github.WithTransport(t)),
 				status.WithSelfJob(selfJobName),
 				status.WithGitHubOwnerAndRepo(owner, repo),
 				status.WithGitHubRef(ghRef),
@@ -71,6 +78,8 @@ func validateCmd() *cobra.Command {
 	cmd.PersistentFlags().UintVar(&validateInvalSecond, "interval", 10, "set validate interval second")
 
 	cmd.PersistentFlags().StringVarP(&ignoredJobs, "ignored", "i", "", "set ignored jobs (comma-separated list)")
+
+	cmd.PersistentFlags().IntVar(&githubClientRetry, "github-client-retry", 0, "set retry count for GitHub client")
 
 	return cmd
 }

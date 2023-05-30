@@ -15,6 +15,10 @@ inputs:
     description: "set validate interval second (default 5)"
     required: false
     default: "5"
+  github-client-retry:
+    description: "set retry count for GitHub client (default 0)"
+    required: false
+    default: "0"
   timeout:
     description: "set validate timeout second (default 600)"
     required: false
@@ -35,6 +39,7 @@ runs:
     - "--token=${{ inputs.token }}"
     - "--self=${{ inputs.self }}"
     - "--interval=${{ inputs.interval }}"
+    - "--github-client-retry=${{ inputs.github-client-retry }}"
     - "--ref=${{ inputs.ref }}"
     - "--timeout=${{ inputs.timeout }}"
     - "--ignored=${{ inputs.ignored }}"
