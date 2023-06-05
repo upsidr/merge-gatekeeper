@@ -11,7 +11,8 @@ on:
       - main
       - release/v*
     paths:
-      - cmd/**
+      - main.go
+      - version.txt
       - internal/**
       - go.mod
       - go.sum
