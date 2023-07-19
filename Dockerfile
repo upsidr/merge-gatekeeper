@@ -13,7 +13,7 @@ WORKDIR ${GOPATH}/src/github.com/${ORG}/${REPO}
 
 COPY . .
 
-RUN CGO_ENABLED=0 go build ./cmd/merge-gatekeeper \
+RUN CGO_ENABLED=0 go build . \
     && mv merge-gatekeeper /go/bin/
 
 ENTRYPOINT ["/go/bin/merge-gatekeeper"]
