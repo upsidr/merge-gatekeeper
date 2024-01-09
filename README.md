@@ -27,7 +27,7 @@ You can find [more details here](/docs/details.md).
 
 <!-- == imptr: example-usage / begin from: ./docs/action-usage.md#[simple-usage] == -->
 
-The easiest approach is to copy the standard definition, and save it under `.github/workspaces` directory. There is no further modification required unless you have some specific requirements.
+The easiest approach is to copy the standard definition, and save it under `.github/workflows` directory. There is no further modification required unless you have some specific requirements.
 
 #### With `curl`
 
