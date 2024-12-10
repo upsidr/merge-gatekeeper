@@ -4,12 +4,11 @@ on:
   push:
     branches:
       - main
-    tags:
       - v*
   pull_request:
     branches:
       - main
-      - release/v*
+      - release*
     paths:
       - main.go
       - version.txt

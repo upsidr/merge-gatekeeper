@@ -19,9 +19,9 @@ jobs:
     steps:
       - name: Run Merge Gatekeeper
         # NOTE: v1 is updated to reflect the latest v1.x.y. Please use any tag/branch that suits your needs:
-        #       https://github.com/upsidr/merge-gatekeeper/tags
-        #       https://github.com/upsidr/merge-gatekeeper/branches
-        uses: upsidr/merge-gatekeeper@v1
+        #       https://github.com/surgeventures/merge-gatekeeper/tags
+        #       https://github.com/surgeventures/merge-gatekeeper/branches
+        uses: surgeventures/merge-gatekeeper@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 # == export: standard-setup / end ==
@@ -47,7 +47,7 @@ jobs:
       statuses: read
     steps:
       - name: Run Merge Gatekeeper
-        uses: upsidr/merge-gatekeeper@main
+        uses: surgeventures/merge-gatekeeper@main
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           self: Custom Name for Merge Gatekeeper # This must match with the Job name provided above.

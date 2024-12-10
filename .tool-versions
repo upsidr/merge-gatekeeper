@@ -1,0 +1,5 @@
+# asdf plugin-add golang
+golang 1.19
+
+# asdf plugin-add nodejs
+nodejs 20.12.2

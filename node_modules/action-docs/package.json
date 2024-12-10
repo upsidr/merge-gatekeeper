@@ -1,0 +1,79 @@
+{
+  "name": "action-docs",
+  "version": "2.5.1",
+  "description": "Generate GitHub action docs based on action.yml",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "type": "module",
+  "bin": {
+    "action-docs": "lib/cli.js"
+  },
+  "scripts": {
+    "prepare": "tsc",
+    "build": "tsc",
+    "format": "prettier --write **/*.ts",
+    "format-check": "prettier --check **/*.ts",
+    "lint": "eslint src/**/*.ts",
+    "test": "jest --runInBand --testTimeout=10000 --collect-coverage --coverage",
+    "test-default": "jest --testTimeout=10000 --testPathIgnorePatterns=__tests__/cli.test.ts --collect-coverage --coverage",
+    "test-cli": "nyc jest --testTimeout=10000 --silent --testMatch=**/cli*test.ts && nyc report --reporter=lcov --reporter=html --report-dir=./coverage_nyc",
+    "test-action": "nyc jest --testTimeout=10000 --silent --testMatch=**/action-docs-action.test.ts --coverage=false",
+    "test-workflow": "nyc jest --testTimeout=10000 --silent --testMatch=**/action-docs-workflow.test.ts --coverage=false",
+    "dev-action": "yarn run build && node lib/cli.js -s __tests__/fixtures/action/action.yml",
+    "dev-workflow": "yarn run build && node lib/cli.js -s __tests__/fixtures/workflow/workflow.yml",
+    "help": "yarn run build && node lib/cli.js --help",
+    "all": "yarn run build && yarn run format && yarn run lint && yarn test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/npalm/action-docs.git"
+  },
+  "keywords": [
+    "actions",
+    "node",
+    "github",
+    "cli",
+    "docs"
+  ],
+  "author": "Niek Palm",
+  "license": "MIT",
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "figlet": "^1.7.0",
+    "replace-in-file": "^7.1.0",
+    "showdown": "^2.1.0",
+    "yaml": "^2.3.4",
+    "yargs": "^17.7.2"
+  },
+  "files": [
+    "lib",
+    "src",
+    "tsconfig.json",
+    "README.md"
+  ],
+  "devDependencies": {
+    "@types/figlet": "^1.5.0",
+    "@types/jest": "^29.5.12",
+    "@types/showdown": "^2.0.6",
+    "@typescript-eslint/parser": "^8.8.1",
+    "eslint": "^8.56.0",
+    "eslint-import-resolver-typescript": "^3.6.1",
+    "eslint-plugin-github": "^4.10.0",
+    "eslint-plugin-jest": "^27.6.0",
+    "eslint-plugin-prettier": "^5.1.0",
+    "jest": "^29.7.0",
+    "nyc": "^17.0.0",
+    "prettier": "^3.2.5",
+    "ts-jest": "^29.1.0",
+    "typescript": "^5.3.0",
+    "yaml-types": "^0.4.0",
+    "yarn": "^1.22.0"
+  },
+  "bugs": {
+    "url": "https://github.com/npalm/action-docs/issues"
+  },
+  "homepage": "https://github.com/npalm/action-docs#readme",
+  "directories": {
+    "dist": "lib"
+  }
+}
