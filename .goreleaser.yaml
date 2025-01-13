@@ -8,6 +8,9 @@
 
 version: 2
 
+signs:
+  - artifacts: checksum
+
 before:
   hooks:
     # You may remove this if you don't use go modules.
