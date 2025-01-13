@@ -15,4 +15,7 @@
 # vendor/
 
 # Built binary
-merge-gatekeeper
+gatekeeper
+.env
+
+dist/

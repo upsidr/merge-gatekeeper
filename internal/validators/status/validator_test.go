@@ -7,9 +7,9 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/upsidr/merge-gatekeeper/internal/github"
-	"github.com/upsidr/merge-gatekeeper/internal/github/mock"
-	"github.com/upsidr/merge-gatekeeper/internal/validators"
+	"github.com/argandtech/gatekeeper/internal/github"
+	"github.com/argandtech/gatekeeper/internal/github/mock"
+	"github.com/argandtech/gatekeeper/internal/validators"
 )
 
 func stringPtr(str string) *string {

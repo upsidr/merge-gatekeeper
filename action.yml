@@ -1,4 +1,4 @@
-name: "Merge Gatekeeper"
+name: "Gatekeeper"
 description: "Get better merge control"
 branding:
   icon: git-merge
@@ -10,7 +10,7 @@ inputs:
   self:
     description: "set self job name"
     required: false
-    default: "merge-gatekeeper"
+    default: "gatekeeper"
   interval:
     description: "set validate interval second (default 5)"
     required: false

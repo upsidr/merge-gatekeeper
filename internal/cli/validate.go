@@ -9,17 +9,17 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/upsidr/merge-gatekeeper/internal/github"
-	"github.com/upsidr/merge-gatekeeper/internal/ticker"
-	"github.com/upsidr/merge-gatekeeper/internal/validators"
-	"github.com/upsidr/merge-gatekeeper/internal/validators/status"
+	"github.com/argandtech/gatekeeper/internal/github"
+	"github.com/argandtech/gatekeeper/internal/ticker"
+	"github.com/argandtech/gatekeeper/internal/validators"
+	"github.com/argandtech/gatekeeper/internal/validators/status"
 )
 
-const defaultSelfJobName = "merge-gatekeeper"
+const defaultSelfJobName = "gatekeeper"
 
 // These variables will be set by command line flags.
 var (
-	ghRepo              string // e.g) upsidr/merge-gatekeeper
+	ghRepo              string // e.g) upsidr/gatekeeper
 	ghRef               string
 	timeoutSecond       uint
 	validateInvalSecond uint

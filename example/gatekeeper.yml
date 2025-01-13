@@ -5,20 +5,16 @@ on:
   pull_request:
     branches:
       - main
+      - master
 
 jobs:
-  merge-gatekeeper:
+  gatekeeper:
     runs-on: ubuntu-latest
     permissions:
       checks: read
       statuses: read
     steps:
-      - name: Check out
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-
-      - name: Run Merge Gatekeeper
-        uses: ./
+      - name: Run gatekeeper
+        uses: argandtech/gatekeeper@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}

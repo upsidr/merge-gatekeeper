@@ -1,3 +1,4 @@
+// Package cli
 package cli
 
 import (
@@ -13,9 +14,10 @@ var (
 	ghToken string
 )
 
+// Run executes the command line interface
 func Run(version string, args ...string) error {
 	cmd := &cobra.Command{
-		Use:     "merge-gatekeeper",
+		Use:     "gatekeeper",
 		Short:   "Get more refined merge control",
 		Version: version,
 	}
