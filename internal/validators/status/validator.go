@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/upsidr/merge-gatekeeper/internal/github"
 	"github.com/upsidr/merge-gatekeeper/internal/multierror"
@@ -206,7 +207,7 @@ func (sv *statusValidator) listGhaStatuses(ctx context.Context) ([]*ghaStatus, e
 		currentJobs[*s.Context] = struct{}{}
 
 		ghaStatuses = append(ghaStatuses, &ghaStatus{
-			Job:   *s.Context,
+			Job:   *s.Context + strconv.FormatInt(*s.ID, 10),
 			State: *s.State,
 		})
 	}
