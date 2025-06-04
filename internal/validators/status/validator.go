@@ -227,7 +227,7 @@ func (sv *statusValidator) listGhaStatuses(ctx context.Context) ([]*ghaStatus, e
 		currentJobs[*run.Name] = struct{}{}
 
 		ghaStatus := &ghaStatus{
-			Job: *run.Name,
+			Job: *run.Name + strconv.FormatInt(*run.ID, 10),
 		}
 
 		if *run.Status != checkRunCompletedStatus {
