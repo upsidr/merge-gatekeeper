@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/upsidr/merge-gatekeeper/internal/github"
 	"github.com/upsidr/merge-gatekeeper/internal/multierror"
@@ -121,7 +123,7 @@ func (sv *statusValidator) Validate(ctx context.Context) (validators.Status, err
 		}
 
 		// Ignored jobs and this job itself should be considered as success regardless of their statuses.
-		if toIgnore || ghaStatus.Job == sv.selfJobName {
+		if toIgnore || strings.Contains(ghaStatus.Job, sv.selfJobName) {
 			successCnt++
 			continue
 		}
@@ -200,13 +202,14 @@ func (sv *statusValidator) listGhaStatuses(ctx context.Context) ([]*ghaStatus, e
 		if s.Context == nil || s.State == nil {
 			return nil, fmt.Errorf("%w context: %v, status: %v", ErrInvalidCombinedStatusResponse, s.Context, s.State)
 		}
-		if _, ok := currentJobs[*s.Context]; ok {
+		var jobIdentifier string = *s.Context + "-" + strconv.FormatInt(*s.ID, 10)
+		if _, ok := currentJobs[jobIdentifier]; ok {
 			continue
 		}
-		currentJobs[*s.Context] = struct{}{}
+		currentJobs[jobIdentifier] = struct{}{}
 
 		ghaStatuses = append(ghaStatuses, &ghaStatus{
-			Job:   *s.Context,
+			Job:   jobIdentifier,
 			State: *s.State,
 		})
 	}
@@ -220,13 +223,14 @@ func (sv *statusValidator) listGhaStatuses(ctx context.Context) ([]*ghaStatus, e
 		if run.Name == nil || run.Status == nil {
 			return nil, fmt.Errorf("%w name: %v, status: %v", ErrInvalidCheckRunResponse, run.Name, run.Status)
 		}
-		if _, ok := currentJobs[*run.Name]; ok {
+		runIdentifier := *run.Name + "-" + strconv.FormatInt(*run.ID, 10)
+		if _, ok := currentJobs[runIdentifier]; ok {
 			continue
 		}
-		currentJobs[*run.Name] = struct{}{}
+		currentJobs[runIdentifier] = struct{}{}
 
 		ghaStatus := &ghaStatus{
-			Job: *run.Name,
+			Job: runIdentifier,
 		}
 
 		if *run.Status != checkRunCompletedStatus {
