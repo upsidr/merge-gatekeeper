@@ -23,6 +23,7 @@ var (
 	ghRef               string
 	timeoutSecond       uint
 	validateInvalSecond uint
+	initialDelaySecond  uint
 	selfJobName         string
 	ignoredJobs         string
 )
@@ -69,6 +70,7 @@ func validateCmd() *cobra.Command {
 
 	cmd.PersistentFlags().UintVar(&timeoutSecond, "timeout", 600, "set validate timeout second")
 	cmd.PersistentFlags().UintVar(&validateInvalSecond, "interval", 10, "set validate interval second")
+	cmd.PersistentFlags().UintVar(&initialDelaySecond, "initial-delay", 0, "set the delay in seconds before the first validation (not included in timeout)")
 
 	cmd.PersistentFlags().StringVarP(&ignoredJobs, "ignored", "i", "", "set ignored jobs (comma-separated list)")
 
@@ -97,6 +99,10 @@ func debug(logger logger, name string) func() {
 }
 
 func doValidateCmd(ctx context.Context, logger logger, vs ...validators.Validator) error {
+	if err := waitInitialDelay(ctx, logger, time.Duration(initialDelaySecond)*time.Second); err != nil {
+		return err
+	}
+
 	ctx, cancel := context.WithTimeout(ctx, time.Duration(timeoutSecond)*time.Second)
 	defer cancel()
 
@@ -145,4 +151,25 @@ func validate(ctx context.Context, v validators.Validator, logger logger) (bool,
 		return false, nil
 	}
 	return true, nil
+}
+
+// waitInitialDelay blocks for the given duration before the first validation.
+// The delay is not counted towards the validation timeout. It returns early
+// with ctx.Err() if the context is cancelled while waiting.
+func waitInitialDelay(ctx context.Context, logger logger, d time.Duration) error {
+	if d <= 0 {
+		return nil
+	}
+
+	logger.Printf("Waiting %d seconds before the first validation...\n", int(d.Seconds()))
+
+	t := time.NewTimer(d)
+	defer t.Stop()
+
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-t.C:
+		return nil
+	}
 }

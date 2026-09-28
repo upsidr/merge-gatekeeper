@@ -19,6 +19,10 @@ inputs:
     description: "set validate timeout second (default 600)"
     required: false
     default: "600"
+  initial-delay:
+    description: "set the delay in seconds before the first validation. Not included in timeout (default 0)"
+    required: false
+    default: "0"
   ignored:
     description: "set ignored jobs (comma-separated list)"
     required: false
@@ -37,4 +41,5 @@ runs:
     - "--interval=${{ inputs.interval }}"
     - "--ref=${{ inputs.ref }}"
     - "--timeout=${{ inputs.timeout }}"
+    - "--initial-delay=${{ inputs.initial-delay }}"
     - "--ignored=${{ inputs.ignored }}"
