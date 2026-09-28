@@ -61,10 +61,11 @@ jobs:
       statuses: read
     steps:
       - name: Run Merge Gatekeeper
-        # NOTE: v1 is updated to reflect the latest v1.x.y. Please use any tag/branch that suits your needs:
+        # NOTE: Pinned to commit SHA for supply-chain safety. Update by replacing
+        #       both the SHA and the version tag in the trailing comment.
         #       https://github.com/upsidr/merge-gatekeeper/tags
         #       https://github.com/upsidr/merge-gatekeeper/branches
-        uses: upsidr/merge-gatekeeper@v1
+        uses: upsidr/merge-gatekeeper@09af7a82c1666d0e64d2bd8c01797a0bcfd3bb5d # v1.2.1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 ```
