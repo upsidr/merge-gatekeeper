@@ -7,6 +7,7 @@ on:
       - main
     paths:
       - "**.md"
+      - .github/workflows/documentation-ci.yaml
 
 env:
   # Takumi Guard: route package fetches through the malware blocklist proxy.
