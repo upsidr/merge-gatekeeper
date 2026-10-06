@@ -16,9 +16,12 @@ on:
       - internal/**
       - go.mod
       - go.sum
+      - .github/workflows/build-ci.yaml
 
 env:
   GO_VERSION: 1.16.7
+  # Takumi Guard: route package fetches through the malware blocklist proxy.
+  GOPROXY: https://golang.flatt.tech
 
 jobs:
   build:
