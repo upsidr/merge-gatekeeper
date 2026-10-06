@@ -8,6 +8,10 @@ on:
     paths:
       - "**.md"
 
+env:
+  # Takumi Guard: route package fetches through the malware blocklist proxy.
+  GOPROXY: https://golang.flatt.tech
+
 jobs:
   importer:
     name: Run Importer Generate for Markdowns
