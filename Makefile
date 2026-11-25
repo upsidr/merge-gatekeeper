@@ -9,3 +9,6 @@ run:
 
 test:
 	node --test --test-timeout=30000
+
+lint:
+	npm run lint

@@ -41,5 +41,19 @@ make run REPO=upsidr/merge-gatekeeper REF=main
 ```bash
 make test
 # or
-node --test
+node --test --test-timeout=30000
 ```
+
+## Lint and static analysis
+
+```bash
+make lint
+# or
+npm run lint
+```
+
+ESLint is not a dependency of the action. It is fetched by `npx` at a pinned version, through the Takumi Guard registry, both locally and in CI. Its config (`eslint.config.js`) must not import any package.
+
+CodeQL (`.github/workflows/codeql.yaml`) analyses the JavaScript and the workflow files on every pull request to `main` and weekly. Results appear in the Security tab and on the pull request.
+
+See [`AGENTS.md`](../AGENTS.md) for the conventions to follow when maintaining this repository.

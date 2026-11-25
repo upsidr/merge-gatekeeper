@@ -14,7 +14,7 @@ import {
 
 const { SUCCESS, ERROR, FAILURE, PENDING } = State;
 const status = (context, state) => ({ context, state });
-const run = (name, status, conclusion, extra = {}) => ({ name, status, conclusion, ...extra });
+const run = (name, runStatus, conclusion, extra = {}) => ({ name, status: runStatus, conclusion, ...extra });
 /** Job list -> [label, state] pairs, for compact assertions. */
 const pairs = (jobs) => jobs.map((j) => [j.label, j.state]);
 
