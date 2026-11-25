@@ -75,9 +75,9 @@ function workflowResolver(client, config, logger) {
     const sha = checkRuns.find((r) => typeof r.head_sha === "string")?.head_sha;
     if (!sha) return workflows;
     try {
-      for (const run of await client.listWorkflowRuns(config.owner, config.repo, sha, signal)) {
-        if (run?.check_suite_id == null || run.workflow_id == null) continue;
-        workflows.set(run.check_suite_id, { id: run.workflow_id, name: run.name ?? "", path: run.path ?? "" });
+      for (const wr of await client.listWorkflowRuns(config.owner, config.repo, sha, signal)) {
+        if (wr?.check_suite_id == null || wr.workflow_id == null) continue;
+        workflows.set(wr.check_suite_id, { id: wr.workflow_id, name: wr.name ?? "", path: wr.path ?? "" });
       }
     } catch (err) {
       if (!isMissingPermission(err, "actions=read")) throw err;

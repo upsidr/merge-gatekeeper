@@ -136,8 +136,8 @@ describe("collectJobStates (Go: listGhaStatuses)", () => {
 describe("jobs with the same name in different workflows (#60)", () => {
   const ACTIONS = { slug: "github-actions", id: 15368 };
   /** An Actions check run in check suite `suite`. */
-  const job = (name, status, conclusion, id, suite) =>
-    run(name, status, conclusion, { id, check_suite: { id: suite }, app: ACTIONS });
+  const job = (name, runStatus, conclusion, id, suite) =>
+    run(name, runStatus, conclusion, { id, check_suite: { id: suite }, app: ACTIONS });
   const workflow = (id, name, path = `.github/workflows/${name.toLowerCase()}.yaml`) => ({ id, name, path });
   // Check suites 100 and 101 are two runs of "CI"; 200 is a run of "Deploy".
   const workflows = () =>
