@@ -53,7 +53,10 @@ on:
 
 jobs:
   merge-gatekeeper:
-    runs-on: ubuntu-latest
+    # The cheapest runner is enough: the job mostly waits. ubuntu-slim jobs are
+    # stopped after 15 minutes, so use ubuntu-latest if you raise `timeout`
+    # (default 10 minutes) close to that.
+    runs-on: ubuntu-slim
     # Restrict permissions of the GITHUB_TOKEN.
     # Docs: https://docs.github.com/en/actions/using-jobs/assigning-permissions-to-jobs
     permissions:
@@ -82,7 +85,9 @@ You can find [more details here](/docs/action-usage.md).
 
 Merge Gatekeeper is a JavaScript action that runs on the `node24` runtime bundled with the GitHub Actions runner. It does not need Docker, and it does not need `actions/checkout` or `actions/setup-node`.
 
-- **We recommend `runs-on: ubuntu-latest`.** The job mostly waits for other jobs, so it needs no particular machine. Linux runners start fastest and are the cheapest GitHub-hosted runners, while macOS and Windows runners are billed at a higher rate for the same wait. Merge Gatekeeper also works on them if you have a reason to use them.
+- **We recommend `runs-on: ubuntu-slim`.** The job mostly waits for other jobs and only makes a few API calls, so the [single-CPU Linux runner](https://docs.github.com/en/actions/reference/runners/github-hosted-runners#single-cpu-runners) (1 vCPU, 5 GB RAM, runs in a container) is enough. In private repositories it is billed at a third of the standard Linux runner ([pricing](https://docs.github.com/en/billing/reference/actions-runner-pricing)); in public repositories both are free. v1, a Docker container action, was not a fit for it: `ubuntu-slim` runs in an unprivileged container without Docker-in-Docker support.
+- **`ubuntu-slim` jobs are stopped after 15 minutes.** Keep `initial-delay` plus `timeout` well below that; the defaults (no delay, `timeout: 600`) fit. If your other jobs take longer than about 14 minutes, use `runs-on: ubuntu-latest` instead, which has the usual 6-hour job limit.
+- macOS and Windows runners also work, but they are billed at a higher rate for the same wait.
 - **Self-hosted runners** must run a version of the Actions runner that supports `node24` actions. Docker is not required, so runners inside containers or without Docker access work as well.
 - **GitHub Enterprise Server** is supported. The API endpoint is taken from `GITHUB_API_URL`, which the runner sets automatically.
 - **Network access** to the GitHub REST API (`api.github.com`, or your Enterprise Server API) is the only outbound connection Merge Gatekeeper makes. If the runner reaches it through a proxy, `HTTPS_PROXY` / `HTTP_PROXY` and `NO_PROXY` (upper or lower case) are honoured. This needs the `node24` runtime of Actions runner with Node.js 24.14 or later; on older runners, set `NODE_USE_ENV_PROXY: 1` in the job `env`.
