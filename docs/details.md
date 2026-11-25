@@ -47,7 +47,7 @@ Merge Gatekeeper periodically validates the PR status by hitting GitHub API. The
 On every check, Merge Gatekeeper reads two endpoints for the commit (`ref`):
 
 - [Commit statuses](https://docs.github.com/en/rest/commits/statuses) (`GET /repos/{owner}/{repo}/commits/{ref}/status`). When the same context has several statuses, only the latest one counts.
-- [Check runs](https://docs.github.com/en/rest/checks/runs) (`GET /repos/{owner}/{repo}/commits/{ref}/check-runs`). GitHub Actions jobs show up here. When a name was already seen, the older entries are skipped.
+- [Check runs](https://docs.github.com/en/rest/checks/runs) (`GET /repos/{owner}/{repo}/commits/{ref}/check-runs`). GitHub Actions jobs show up here. Jobs are told apart by workflow run (check suite) and name, so jobs with the same name in different workflows are all checked. When a job was re-run, only its latest run counts. In the log, jobs that share a name are shown with their check suite id.
 
 Each job then ends up in one of these states:
 
@@ -57,7 +57,7 @@ Each job then ends up in one of these states:
 | Check run `skipped`                                   | Not counted                   |
 | Check run not completed yet, status `pending`         | Still running                 |
 | Status `error` / `failure`, any other check run result | Failed                       |
-| Merge Gatekeeper itself (`self`), and `ignored` jobs  | Success, regardless of state  |
+| Merge Gatekeeper itself (`self`), and `ignored` jobs (every job with that name) | Success, regardless of state  |
 
 If any job failed, Merge Gatekeeper fails straight away and lists the failed jobs. If every job succeeded, it passes. Otherwise it waits `interval` seconds and checks again, until `timeout` is reached.
 

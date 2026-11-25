@@ -13,7 +13,9 @@ import {
 
 const { SUCCESS, ERROR, FAILURE, PENDING } = State;
 const status = (context, state) => ({ context, state });
-const run = (name, status, conclusion) => ({ name, status, conclusion });
+const run = (name, status, conclusion, extra = {}) => ({ name, status, conclusion, ...extra });
+/** Job list -> [label, state] pairs, for compact assertions. */
+const pairs = (jobs) => jobs.map((j) => [j.label, j.state]);
 
 describe("parseIgnored (Go: WithIgnoredJobs)", () => {
   test("splits and trims a comma-separated list", () => {
@@ -82,7 +84,7 @@ describe("collectJobStates (Go: listGhaStatuses)", () => {
 
   test("returns job states", () => {
     const got = collectJobStates([status("job-01", SUCCESS)], checkRuns);
-    assert.deepEqual([...got], expected);
+    assert.deepEqual(pairs(got), expected);
   });
 
   test("succeeds to get job statuses even if the same job exists (first one wins)", () => {
@@ -90,22 +92,22 @@ describe("collectJobStates (Go: listGhaStatuses)", () => {
       [status("job-01", SUCCESS), status("job-01", ERROR)],
       [run("job-02", "failure"), run("job-02", "completed", "neutral"), ...checkRuns.slice(1)],
     );
-    assert.deepEqual([...got], expected);
+    assert.deepEqual(pairs(got), expected);
   });
 
   test("check run with a name already seen in statuses is skipped", () => {
     const got = collectJobStates([status("job", PENDING)], [run("job", "completed", "success")]);
-    assert.deepEqual([...got], [["job", PENDING]]);
+    assert.deepEqual(pairs(got), [["job", PENDING]]);
   });
 
   test("an older run cannot reappear after a newer skipped run", () => {
     const got = collectJobStates([], [run("job", "completed", "skipped"), run("job", "completed", "failure")]);
-    assert.deepEqual([...got], []);
+    assert.deepEqual(pairs(got), []);
   });
 
   test("completed check run with null conclusion is pending, not a crash", () => {
     const got = collectJobStates([], [run("job", "completed", null), run("job-2", "completed", undefined)]);
-    assert.deepEqual([...got], [["job", PENDING], ["job-2", PENDING]]);
+    assert.deepEqual(pairs(got), [["job", PENDING], ["job-2", PENDING]]);
   });
 
   test("handles hundreds of jobs", () => {
@@ -115,7 +117,7 @@ describe("collectJobStates (Go: listGhaStatuses)", () => {
         names.map((j) => status(j, SUCCESS)),
         names.map((j) => run(j, "completed", "neutral")),
       );
-      assert.deepEqual([...got], names.map((j) => [j, SUCCESS]));
+      assert.deepEqual(pairs(got), names.map((j) => [j, SUCCESS]));
     }
   });
 
@@ -130,8 +132,80 @@ describe("collectJobStates (Go: listGhaStatuses)", () => {
   });
 });
 
+describe("jobs with the same name in different workflows (#60)", () => {
+  const suite = (id) => ({ check_suite: { id } });
+
+  test("are kept apart by check suite, and labelled with it", () => {
+    const got = collectJobStates([], [
+      run("Build, Test and Lint", "completed", "success", { id: 1, ...suite(100) }),
+      run("Build, Test and Lint", "completed", "failure", { id: 2, ...suite(200) }),
+      run("lint", "completed", "success", { id: 3, ...suite(100) }),
+    ]);
+    assert.deepEqual(pairs(got), [
+      ["Build, Test and Lint (check suite 100)", SUCCESS],
+      ["Build, Test and Lint (check suite 200)", ERROR],
+      ["lint", SUCCESS],
+    ]);
+  });
+
+  test("a failure is not hidden by a success with the same name, whatever the API order", () => {
+    const success = run("Plan / Apply", "completed", "success", { id: 10, ...suite(1) });
+    const failure = run("Plan / Apply", "completed", "failure", { id: 11, ...suite(2) });
+    for (const order of [[success, failure], [failure, success]]) {
+      const v = evaluate(collectJobStates([], order), { self: "merge-gatekeeper", ignored: [] });
+      assert.equal(v.failed, true);
+      assert.deepEqual(v.errJobs, ["Plan / Apply (check suite 2)"]);
+    }
+  });
+
+  test("a running job is not hidden by a finished one with the same name", () => {
+    const v = evaluate(
+      collectJobStates([], [
+        run("build", "completed", "success", { id: 1, ...suite(1) }),
+        run("build", "in_progress", null, { id: 2, ...suite(2) }),
+      ]),
+      { self: "merge-gatekeeper", ignored: [] },
+    );
+    assert.equal(v.succeeded, false);
+    assert.equal(v.failed, false);
+  });
+
+  test("within a check suite, only the latest re-run counts", () => {
+    for (const order of [
+      [run("build", "completed", "failure", { id: 1, ...suite(1) }), run("build", "completed", "success", { id: 5, ...suite(1) })],
+      [run("build", "completed", "success", { id: 5, ...suite(1) }), run("build", "completed", "failure", { id: 1, ...suite(1) })],
+    ]) {
+      assert.deepEqual(pairs(collectJobStates([], order)), [["build", SUCCESS]]);
+    }
+  });
+
+  test("a skipped re-run drops the job even if an older run failed", () => {
+    const got = collectJobStates([], [
+      run("build", "completed", "failure", { id: 1, ...suite(1) }),
+      run("build", "completed", "skipped", { id: 2, ...suite(1) }),
+    ]);
+    assert.deepEqual(pairs(got), []);
+  });
+
+  test("ignored and self apply to every job with that name", () => {
+    const v = evaluate(
+      collectJobStates([], [
+        run("flaky", "completed", "failure", { id: 1, ...suite(1) }),
+        run("flaky", "completed", "failure", { id: 2, ...suite(2) }),
+        run("merge-gatekeeper", "in_progress", null, { id: 3, ...suite(3) }),
+        run("merge-gatekeeper", "completed", "failure", { id: 4, ...suite(4) }),
+        run("build", "completed", "success", { id: 5, ...suite(1) }),
+      ]),
+      { self: "merge-gatekeeper", ignored: ["flaky"] },
+    );
+    assert.equal(v.failed, false);
+    assert.equal(v.succeeded, true);
+    assert.deepEqual(v.totalJobs, ["build"]);
+  });
+});
+
 describe("evaluate (Go: statusValidator.Validate)", () => {
-  const jobs = (...pairs) => new Map(pairs);
+  const jobs = (...entries) => entries.map(([name, state]) => ({ name, label: name, state }));
   const verdict = (v) => ({ ignoredJobs: [], ...v });
 
   test("succeeded when there is no job", () => {

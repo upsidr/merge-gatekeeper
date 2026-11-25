@@ -65,26 +65,41 @@ export function ownerAndRepository(str) {
 }
 
 /**
- * Builds the per-job state map from the raw API responses.
+ * @typedef {object} Job
+ * @property {string} name   job name, used to match `self` and `ignored`
+ * @property {string} label  unique name for logs; differs from `name` only when
+ *                           several workflows have a job with the same name
+ * @property {string} state  one of State
+ */
+
+/** @param {{ id?: unknown }} run */
+const runId = (run) => (typeof run.id === "number" ? run.id : -Infinity);
+
+/**
+ * Builds the list of jobs to evaluate from the raw API responses.
  *
- * - Commit statuses are deduplicated by context. GitHub returns the latest
- *   status first, so the first one seen wins.
- * - A check run whose name was already seen (in statuses or earlier check
- *   runs) is skipped.
+ * Commit statuses:
+ * - Deduplicated by context. GitHub returns the latest status first, so the
+ *   first one seen wins.
+ *
+ * Check runs:
+ * - A job is identified by its check suite and name. Each workflow run has
+ *   its own check suite, so jobs with the same name in different workflows
+ *   are kept apart (#60). Re-runs stay in the same check suite, so only the
+ *   latest run (highest id) of a job counts.
+ * - A check run with the same name as a commit status context is skipped.
  * - A check run that is not completed is pending. A completed run is success
  *   for success/neutral, dropped for skipped, and error for anything else.
  *   A completed run with no conclusion yet is treated as pending.
  *
  * @param {Array<{context?: string, state?: string}>} statuses
- * @param {Array<{name?: string, status?: string, conclusion?: string | null}>} checkRuns
- * @returns {Map<string, string>} job name -> state, in discovery order
+ * @param {Array<{id?: number, name?: string, status?: string, conclusion?: string | null, check_suite?: { id?: number } | null}>} checkRuns
+ * @returns {Job[]} in discovery order
  */
 export function collectJobStates(statuses, checkRuns) {
-  /** @type {Map<string, string>} */
-  const jobs = new Map();
-  // Names seen so far, including skipped check runs, so an older run with the
-  // same name cannot reappear.
-  const seen = new Set();
+  /** @type {Job[]} */
+  const jobs = [];
+  const statusContexts = new Set();
 
   for (const s of statuses) {
     if (!s || typeof s.context !== "string" || typeof s.state !== "string") {
@@ -92,26 +107,47 @@ export function collectJobStates(statuses, checkRuns) {
         `github combined status response is invalid context: ${s?.context}, status: ${s?.state}`,
       );
     }
-    if (seen.has(s.context)) continue;
-    seen.add(s.context);
-    jobs.set(s.context, s.state);
+    if (statusContexts.has(s.context)) continue;
+    statusContexts.add(s.context);
+    jobs.push({ name: s.context, label: s.context, state: s.state });
   }
 
+  // Latest check run per (check suite, name), in order of first appearance.
+  /** @type {Map<string, any>} */
+  const latest = new Map();
   for (const run of checkRuns) {
     if (!run || typeof run.name !== "string" || typeof run.status !== "string") {
       throw new Error(
         `github checkRun response is invalid name: ${run?.name}, status: ${run?.status}`,
       );
     }
-    if (seen.has(run.name)) continue;
-    seen.add(run.name);
+    if (statusContexts.has(run.name)) continue;
+    const key = `${run.check_suite?.id ?? ""}\u0000${run.name}`;
+    const current = latest.get(key);
+    if (!current || runId(run) > runId(current)) latest.set(key, run);
+  }
 
+  // Names that appear in more than one check suite get the suite id in their
+  // label, so logs can tell them apart.
+  const suitesPerName = new Map();
+  for (const run of latest.values()) {
+    suitesPerName.set(run.name, (suitesPerName.get(run.name) ?? 0) + 1);
+  }
+
+  for (const run of latest.values()) {
+    let state;
     if (run.status !== CHECK_RUN_COMPLETED || run.conclusion == null) {
-      jobs.set(run.name, State.PENDING);
+      state = State.PENDING;
+    } else if (run.conclusion === SKIPPED_CONCLUSION) {
       continue;
+    } else {
+      state = SUCCESS_CONCLUSIONS.has(run.conclusion) ? State.SUCCESS : State.ERROR;
     }
-    if (run.conclusion === SKIPPED_CONCLUSION) continue;
-    jobs.set(run.name, SUCCESS_CONCLUSIONS.has(run.conclusion) ? State.SUCCESS : State.ERROR);
+    const label =
+      suitesPerName.get(run.name) > 1 && run.check_suite?.id != null
+        ? `${run.name} (check suite ${run.check_suite.id})`
+        : run.name;
+    jobs.push({ name: run.name, label, state });
   }
 
   return jobs;
@@ -128,8 +164,9 @@ export function collectJobStates(statuses, checkRuns) {
  */
 
 /**
- * Turns the per-job state map into a verdict.
- * @param {Map<string, string>} jobs
+ * Turns the job list into a verdict. `self` and `ignored` match job names, so
+ * they apply to every job with that name, in any workflow.
+ * @param {Job[]} jobs
  * @param {{ self: string, ignored: string[] }} opts
  * @returns {Verdict}
  */
@@ -140,18 +177,18 @@ export function evaluate(jobs, { self, ignored }) {
   const errJobs = [];
   let successCount = 0;
 
-  for (const [job, state] of jobs) {
+  for (const { name, label, state } of jobs) {
     // Ignored jobs and this job itself count as success regardless of state.
-    if (ignoredSet.has(job) || job === self) {
+    if (ignoredSet.has(name) || name === self) {
       successCount++;
       continue;
     }
-    totalJobs.push(job);
+    totalJobs.push(label);
     if (state === State.SUCCESS) {
-      completeJobs.push(job);
+      completeJobs.push(label);
       successCount++;
     } else if (state === State.ERROR || state === State.FAILURE) {
-      errJobs.push(job);
+      errJobs.push(label);
     }
   }
 
@@ -161,7 +198,7 @@ export function evaluate(jobs, { self, ignored }) {
     errJobs,
     ignoredJobs: [...ignored],
     failed: errJobs.length > 0,
-    succeeded: errJobs.length === 0 && successCount === jobs.size,
+    succeeded: errJobs.length === 0 && successCount === jobs.length,
   };
 }
 
