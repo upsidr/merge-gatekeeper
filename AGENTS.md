@@ -21,9 +21,11 @@ Merge Gatekeeper is a **public, open source GitHub Action** (MIT). It is used by
 
 ## The action has no dependencies
 
-- Runtime code (`index.js`, `src/`) uses **Node.js built-ins only**, on the `node24` runtime that the Actions runner bundles. There is no `node_modules`, no bundler and no `dist/`: the files in this repository are exactly what runs. ESLint enforces this (`no-restricted-imports`).
-- Do not add a runtime dependency. If something seems to need one, look for a built-in first and discuss it in an issue.
-- Tools used only in CI (ESLint, CodeQL, importer) are fetched in CI, pinned to an **exact version that has been public for at least two weeks**, and go through the Takumi Guard proxy (`npm_config_registry=https://npm.flatt.tech`, `GOPROXY=https://golang.flatt.tech`).
+- Runtime code (`index.js`, `src/`) uses **Node.js built-ins only**, on the `node24` runtime that the Actions runner bundles. There are no runtime dependencies, no bundler and no `dist/`: the files in this repository are exactly what runs. ESLint enforces this (`no-restricted-imports`).
+- Do not add a runtime dependency (`dependencies` in `package.json`). If something seems to need one, look for a built-in first and discuss it in an issue.
+- Dev tools (ESLint) are `devDependencies`, pinned with an exact version and locked, including their own dependencies, in `package-lock.json`. Install them with `npm ci`. `.npmrc` sends every fetch through the Takumi Guard proxy and disables install scripts.
+- Use versions that have been public for **at least two weeks**. When adding or updating a dev tool, resolve the lockfile with `npm install --before=<date two weeks ago>` so its dependencies follow the same rule.
+- Other tools used in CI (CodeQL, importer) are pinned the same way; Go tools go through `GOPROXY=https://golang.flatt.tech`.
 - Pin every third-party action in `.github/workflows` to a **full commit SHA** with the version in a trailing comment, and give each job the minimum `permissions` it needs.
 
 ## Security expectations
@@ -37,7 +39,7 @@ Merge Gatekeeper is a **public, open source GitHub Action** (MIT). It is used by
 
 ```bash
 node --test --test-timeout=30000   # or: make test
-npm run lint                       # or: make lint (ESLint via npx, pinned)
+npm ci && npm run lint             # or: make lint (ESLint, pinned in package-lock.json)
 find . -name '*.md' -exec importer update {} \;   # docs sync, see below
 ```
 

@@ -1,8 +1,7 @@
-// ESLint config. ESLint runs in CI only, via `npx eslint@<pinned>` (see
-// .github/workflows/build-ci.yaml), so the action itself stays dependency-free.
-// This file must not import any package: npx does not make them resolvable
-// from here. Rules are therefore listed explicitly instead of extending a
-// shared preset.
+// ESLint config. ESLint is a devDependency pinned in package-lock.json and is
+// used for development and CI only; the action itself has no dependencies.
+// Rules are listed explicitly instead of extending a shared preset, so this
+// file imports nothing and every rule we rely on is visible here.
 
 // Globals available in the node24 runtime that this code uses.
 const nodeGlobals = Object.fromEntries(
@@ -10,6 +9,7 @@ const nodeGlobals = Object.fromEntries(
     "AbortController",
     "AbortSignal",
     "DOMException",
+    "Headers",
     "Response",
     "URL",
     "clearTimeout",

@@ -10,5 +10,10 @@ run:
 test:
 	node --test --test-timeout=30000
 
-lint:
+lint: node_modules
 	npm run lint
+
+# Dev tools (ESLint), as pinned in package-lock.json.
+node_modules: package-lock.json
+	npm ci
+	touch node_modules

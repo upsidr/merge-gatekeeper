@@ -15,6 +15,8 @@ on:
       - src/**
       - test/**
       - package.json
+      - package-lock.json
+      - .npmrc
       - eslint.config.js
       - action.yml
       - version.txt
@@ -34,14 +36,13 @@ jobs:
         with:
           node-version: 24
 
-      # No dependencies to install: the action uses Node built-ins only.
+      # The action uses Node built-ins only; tests need nothing installed.
       - name: Run Tests
         run: node --test --test-timeout=30000
 
-      # ESLint is fetched here only, so the action stays dependency-free.
-      # Pin an exact version that has been out for a few weeks.
+      # Dev tools (ESLint) only, exactly as pinned in package-lock.json.
+      # .npmrc routes the fetch through Takumi Guard and disables install scripts.
+      - name: Install dev tools
+        run: npm ci
       - name: Lint
-        env:
-          # Takumi Guard: route package fetches through the malware blocklist proxy.
-          npm_config_registry: https://npm.flatt.tech
-        run: npx --yes eslint@10.14.0 --max-warnings=0 .
+        run: npm run lint

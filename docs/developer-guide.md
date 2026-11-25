@@ -52,7 +52,7 @@ make lint
 npm run lint
 ```
 
-ESLint is not a dependency of the action. It is fetched by `npx` at a pinned version, through the Takumi Guard registry, both locally and in CI. Its config (`eslint.config.js`) must not import any package.
+ESLint is a dev dependency, not a dependency of the action. It is pinned, with its own dependencies, in `package-lock.json`. Run `npm ci` once to install it; `.npmrc` fetches it through the Takumi Guard registry and disables install scripts.
 
 CodeQL (`.github/workflows/codeql.yaml`) analyses the JavaScript and the workflow files on every pull request to `main` and weekly. Results appear in the Security tab and on the pull request.
 
