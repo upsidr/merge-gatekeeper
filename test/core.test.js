@@ -31,13 +31,21 @@ describe("parseIgnored (Go: WithIgnoredJobs)", () => {
 });
 
 describe("parseSeconds", () => {
-  test("accepts non-negative integers", () => {
+  test("a bare number is seconds (v1 compatible)", () => {
     assert.equal(parseSeconds("timeout", "600"), 600);
     assert.equal(parseSeconds("timeout", " 0 "), 0);
   });
+  test("accepts durations with h / m / s units", () => {
+    assert.equal(parseSeconds("timeout", "90s"), 90);
+    assert.equal(parseSeconds("timeout", "10m"), 600);
+    assert.equal(parseSeconds("timeout", "1h"), 3600);
+    assert.equal(parseSeconds("timeout", "1m30s"), 90);
+    assert.equal(parseSeconds("timeout", "1h30m"), 5400);
+    assert.equal(parseSeconds("timeout", "2h5m10s"), 7510);
+  });
   test("rejects anything else", () => {
-    for (const v of ["", "-1", "1.5", "10s", "abc"]) {
-      assert.throws(() => parseSeconds("timeout", v), /timeout/);
+    for (const v of ["", "-1", "1.5", "abc", "10x", "30s10m", "1.5m", "m", "10 m"]) {
+      assert.throws(() => parseSeconds("timeout", v), /timeout/, `should reject "${v}"`);
     }
   });
 });

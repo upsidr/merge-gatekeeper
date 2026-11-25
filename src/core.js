@@ -28,17 +28,28 @@ export function parseIgnored(input) {
 }
 
 /**
- * Parses a non-negative integer number of seconds from an action input.
+ * Parses a duration input into whole seconds.
+ *
+ * A bare number is seconds, as in v1 (e.g. "600"). A duration with units is
+ * also accepted: any combination of hours, minutes and seconds in that order
+ * (e.g. "90s", "10m", "1h", "1m30s").
+ *
  * @param {string} name input name, used in the error message
  * @param {string} value raw input value
- * @returns {number}
+ * @returns {number} seconds
  */
 export function parseSeconds(name, value) {
   const trimmed = String(value ?? "").trim();
-  if (!/^\d+$/.test(trimmed)) {
-    throw new Error(`input "${name}" must be a non-negative integer (seconds), got: "${value}"`);
+  if (/^\d+$/.test(trimmed)) return Number(trimmed);
+
+  const m = /^(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?$/.exec(trimmed);
+  if (!trimmed || !m) {
+    throw new Error(
+      `input "${name}" must be a number of seconds or a duration such as "90s", "10m" or "1h30m", got: "${value}"`,
+    );
   }
-  return Number(trimmed);
+  const [, h = "0", min = "0", s = "0"] = m;
+  return Number(h) * 3600 + Number(min) * 60 + Number(s);
 }
 
 /**

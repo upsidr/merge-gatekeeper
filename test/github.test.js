@@ -76,3 +76,110 @@ describe("requests", () => {
     await assert.rejects(client.listStatuses("o", "r", "sha"), /401 Unauthorized - Bad credentials/);
   });
 });
+
+describe("retries (#64)", () => {
+  const ok = () => json({ total_count: 0, statuses: [] });
+  const fail = (status, headers = {}) => () =>
+    json({ message: "nope" }, { status, statusText: `status ${status}`, headers });
+
+  /** fetch that plays the given responses in order; functions are called, errors are thrown. */
+  function sequence(...steps) {
+    let i = 0;
+    const fetch = async () => {
+      const step = steps[Math.min(i++, steps.length - 1)];
+      if (step instanceof Error) throw step;
+      return step();
+    };
+    return { fetch, calls: () => i };
+  }
+
+  function client(fetch) {
+    const sleeps = [];
+    const warnings = [];
+    const c = createClient({
+      token: "t",
+      fetch,
+      sleep: async (ms) => sleeps.push(ms),
+      warn: (m) => warnings.push(m),
+    });
+    return { c, sleeps, warnings };
+  }
+
+  for (const status of [500, 502, 503, 504]) {
+    test(`retries ${status} with exponential backoff, then succeeds`, async () => {
+      const seq = sequence(fail(status), fail(status), ok);
+      const { c, sleeps, warnings } = client(seq.fetch);
+      assert.deepEqual(await c.listStatuses("o", "r", "sha"), []);
+      assert.equal(seq.calls(), 3);
+      assert.deepEqual(sleeps, [1000, 2000]);
+      assert.equal(warnings.length, 2);
+      assert.match(warnings[0], new RegExp(`${status}.*retry 1 of 3`));
+    });
+  }
+
+  test("retries network errors (e.g. EOF, connection reset)", async () => {
+    const err = new TypeError("fetch failed", { cause: new Error("other side closed") });
+    const seq = sequence(err, ok);
+    const { c, warnings } = client(seq.fetch);
+    assert.deepEqual(await c.listStatuses("o", "r", "sha"), []);
+    assert.match(warnings[0], /network error: other side closed/);
+  });
+
+  test("gives up after 3 retries and reports the last error", async () => {
+    const seq = sequence(fail(502));
+    const { c, sleeps } = client(seq.fetch);
+    await assert.rejects(c.listStatuses("o", "r", "sha"), /502/);
+    assert.equal(seq.calls(), 4);
+    assert.deepEqual(sleeps, [1000, 2000, 4000]);
+  });
+
+  test("gives up on network errors after 3 retries", async () => {
+    const seq = sequence(new TypeError("fetch failed", { cause: new Error("ECONNRESET") }));
+    const { c } = client(seq.fetch);
+    await assert.rejects(c.listStatuses("o", "r", "sha"), /ECONNRESET/);
+    assert.equal(seq.calls(), 4);
+  });
+
+  for (const status of [400, 401, 404, 422, 501]) {
+    test(`does not retry ${status}`, async () => {
+      const seq = sequence(fail(status), ok);
+      const { c, sleeps } = client(seq.fetch);
+      await assert.rejects(c.listStatuses("o", "r", "sha"), new RegExp(String(status)));
+      assert.equal(seq.calls(), 1);
+      assert.deepEqual(sleeps, []);
+    });
+  }
+
+  test("does not retry a plain 403 (missing permission)", async () => {
+    const seq = sequence(fail(403), ok);
+    const { c } = client(seq.fetch);
+    await assert.rejects(c.listStatuses("o", "r", "sha"), /403/);
+    assert.equal(seq.calls(), 1);
+  });
+
+  test("honours Retry-After on 429 and secondary rate limits", async () => {
+    for (const status of [429, 403]) {
+      const seq = sequence(fail(status, { "retry-after": "7" }), ok);
+      const { c, sleeps } = client(seq.fetch);
+      await c.listStatuses("o", "r", "sha");
+      assert.deepEqual(sleeps, [7000], `status ${status}`);
+    }
+  });
+
+  test("does not wait for a rate limit reset that is too far away", async () => {
+    const reset = String(Math.floor(Date.now() / 1000) + 3600);
+    const seq = sequence(fail(403, { "x-ratelimit-remaining": "0", "x-ratelimit-reset": reset }), ok);
+    const { c, sleeps } = client(seq.fetch);
+    await assert.rejects(c.listStatuses("o", "r", "sha"), /403/);
+    assert.deepEqual(sleeps, []);
+  });
+
+  test("does not retry once the timeout aborted the request", async () => {
+    const controller = new AbortController();
+    controller.abort();
+    const seq = sequence(new DOMException("aborted", "AbortError"), ok);
+    const { c } = client(seq.fetch);
+    await assert.rejects(c.listStatuses("o", "r", "sha", controller.signal), /aborted/);
+    assert.equal(seq.calls(), 1);
+  });
+});

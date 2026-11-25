@@ -31,7 +31,10 @@ export function readConfig(env) {
     timeout: parseSeconds("timeout", input("timeout", "600")),
     initialDelay: parseSeconds("initial-delay", input("initial-delay", "0")),
     ignored: parseIgnored(input("ignored")),
-    ref: input("ref"),
+    // The default `ref` is the PR head SHA, which is empty outside pull_request
+    // events (e.g. push, merge_group). Fall back to the commit that triggered
+    // the workflow.
+    ref: input("ref") || (env.GITHUB_SHA ?? "").trim(),
     owner,
     repo,
     apiUrl: env.GITHUB_API_URL || "https://api.github.com",
@@ -43,6 +46,9 @@ export function readConfig(env) {
     errs.push(`github owner or repository is empty. GITHUB_REPOSITORY: "${env.GITHUB_REPOSITORY ?? ""}"`);
   }
   if (!config.ref) errs.push("reference of repository is empty");
+  // Each check makes at least two API calls; without a pause between checks
+  // the action would hit GitHub's secondary rate limits right away.
+  if (config.interval < 1) errs.push(`input "interval" must be at least 1 second, got: "${input("interval")}"`);
   if (errs.length > 0) throw new Error(errs.join("\n"));
   return config;
 }
@@ -61,10 +67,11 @@ class TimeoutError extends Error {}
  * @returns {Promise<{ ok: true } | { ok: false, message: string }>}
  */
 export async function run(config, deps = {}) {
-  const client = deps.client ?? createClient({ token: config.token, apiUrl: config.apiUrl });
+  const logger = deps.logger ?? { log: console.log, warn: console.error };
+  const client =
+    deps.client ?? createClient({ token: config.token, apiUrl: config.apiUrl, warn: (m) => logger.warn(m) });
   const wait = deps.sleep ?? ((ms, signal) => sleep(ms, undefined, { signal }));
   const now = deps.now ?? Date.now;
-  const logger = deps.logger ?? { log: console.log, warn: console.error };
 
   if (config.initialDelay > 0) {
     logger.log(`Waiting ${config.initialDelay} seconds before the first validation...`);
