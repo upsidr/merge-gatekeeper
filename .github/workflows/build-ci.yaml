@@ -35,4 +35,4 @@ jobs:
 
       # No dependencies to install: the action uses Node built-ins only.
       - name: Run Tests
-        run: node --test
+        run: node --test --test-timeout=30000
