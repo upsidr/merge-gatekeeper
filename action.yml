@@ -32,14 +32,5 @@ inputs:
     required: false
     default: ${{ github.event.pull_request.head.sha }}
 runs:
-  using: "docker"
-  image: "Dockerfile"
-  args:
-    - "validate"
-    - "--token=${{ inputs.token }}"
-    - "--self=${{ inputs.self }}"
-    - "--interval=${{ inputs.interval }}"
-    - "--ref=${{ inputs.ref }}"
-    - "--timeout=${{ inputs.timeout }}"
-    - "--initial-delay=${{ inputs.initial-delay }}"
-    - "--ignored=${{ inputs.ignored }}"
+  using: "node24"
+  main: "index.js"

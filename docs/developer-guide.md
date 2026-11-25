@@ -1,50 +1,45 @@
 # Working with Merge Gatekeeper locally
 
+Merge Gatekeeper is a dependency-free JavaScript action. There is nothing to install or build: `index.js` runs directly on Node.js.
+
 ## Requirements
 
-- [`go` >= 1.16.7](https://go.dev/doc/install)
+- [Node.js >= 24](https://nodejs.org/)
 - [A valid github token with `repo` permissions](https://github.com/settings/tokens)
-- [make](https://en.wikipedia.org/wiki/Make_(software))
+- [make](https://en.wikipedia.org/wiki/Make_(software)) (optional)
 
-## Useful but not required
+## Layout
 
-- [`docker`](https://docs.docker.com/engine/install/)
-  - required for building and running via docker
-
-## Building Merge Gatekeeper
-
-Using the [`Makefile`](./../Makefile) run the following to build:
-```bash
-# build go binary
-make go-build
-
-# build docker container
-make docker-build
-```
+- `index.js`: action entry point, referenced from `action.yml`
+- `src/core.js`: pure decision logic (API responses → per-job states → verdict, and the log summary)
+- `src/github.js`: GitHub REST client using the built-in `fetch`
+- `src/run.js`: reads inputs and polls until success, failure, or timeout
+- `test/`: tests using `node:test`
 
 ## Running Merge Gatekeeper
 
-it is recommend to export you [github token with `repo` permissions](https://github.com/settings/tokens) to the environment using
+It is recommended to export your [github token with `repo` permissions](https://github.com/settings/tokens) to the environment using
+
 ```bash
 export GITHUB_TOKEN="your token"
 ```
+
 otherwise, you will need to pass your token in via
+
 ```bash
-GITHUB_TOKEN="your token" make go-run
+GITHUB_TOKEN="your token" make run
 ```
 
-Using the [`Makefile`](./../Makefile) run the following to run:
-```bash
-# build and run go binary
-make go-run
+Using the [`Makefile`](./../Makefile), run the following to check a ref of a repository:
 
-# build and run docker container
-make docker-run
+```bash
+make run REPO=upsidr/merge-gatekeeper REF=main
 ```
 
 ## Testing
-To test, use the makefile:
 
 ```bash
 make test
+# or
+node --test
 ```

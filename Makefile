@@ -3,17 +3,9 @@ REF=main
 REPO=upsidr/merge-gatekeeper
 IGNORED=""
 
-go-build:
-	GO111MODULE=on LANG=en_US.UTF-8 CGO_ENABLED=0 go build ./cmd/merge-gatekeeper
-
-go-run: go-build
-	./merge-gatekeeper validate --token=$(TOKEN) --ref $(REF) --repo $(REPO) --ignored "$(IGNORED)"
-
-docker-build:
-	docker build -t merge-gatekeeper:latest .
-
-docker-run: docker-build
-	docker run --rm -it --name merge-gatekeeper merge-gatekeeper:latest validate --token=$(TOKEN) --ref $(REF) --repo $(REPO) --ignored "$(IGNORED)"
+# Run the action locally against a real repository and ref.
+run:
+	GITHUB_REPOSITORY=$(REPO) INPUT_TOKEN=$(TOKEN) INPUT_REF=$(REF) INPUT_IGNORED="$(IGNORED)" node index.js
 
 test:
-	go test ./...
+	node --test
