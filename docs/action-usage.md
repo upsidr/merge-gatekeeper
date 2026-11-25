@@ -16,6 +16,36 @@
 
 <!-- == export: inputs / end == -->
 
+## Runner Requirements
+
+<!-- == export: runner / begin == -->
+
+Merge Gatekeeper is a JavaScript action that runs on the `node24` runtime bundled with the GitHub Actions runner. It does not need Docker, and it does not need `actions/checkout` or `actions/setup-node`.
+
+- **We recommend `runs-on: ubuntu-latest`.** The job mostly waits for other jobs, so it needs no particular machine. Linux runners start fastest and are the cheapest GitHub-hosted runners, while macOS and Windows runners are billed at a higher rate for the same wait. Merge Gatekeeper also works on them if you have a reason to use them.
+- **Self-hosted runners** must run a version of the Actions runner that supports `node24` actions. Docker is not required, so runners inside containers or without Docker access work as well.
+- **GitHub Enterprise Server** is supported. The API endpoint is taken from `GITHUB_API_URL`, which the runner sets automatically.
+- **Network access** to the GitHub REST API (`api.github.com`, or your Enterprise Server API) is the only outbound connection Merge Gatekeeper makes.
+
+<!-- == export: runner / end == -->
+
+## Upgrading from v1
+
+<!-- == export: upgrade / begin == -->
+
+Change `upsidr/merge-gatekeeper@v1` to `@v2`. The inputs and their defaults are unchanged.
+
+What changes in v2:
+
+- It runs as a JavaScript action, without Docker. There is no image to pull and no build step. See [why](/docs/details.md#why-is-merge-gatekeeper-a-javascript-action).
+- Commits with 100 or more commit statuses no longer cause a timeout ([#98](https://github.com/upsidr/merge-gatekeeper/issues/98)).
+- A completed check run that has no conclusion yet is treated as still running, instead of crashing.
+- GitHub Enterprise Server is supported through `GITHUB_API_URL` ([#74](https://github.com/upsidr/merge-gatekeeper/issues/74)).
+
+If you use a self-hosted runner, check that it supports `node24` actions before upgrading.
+
+<!-- == export: upgrade / end == -->
+
 ## Usage
 
 ### Copy Standard YAML
@@ -56,11 +86,11 @@ jobs:
       statuses: read
     steps:
       - name: Run Merge Gatekeeper
-        # NOTE: Pinned to commit SHA for supply-chain safety. Update by replacing
-        #       both the SHA and the version tag in the trailing comment.
+        # NOTE: For supply-chain safety, pin to a commit SHA and keep the version
+        #       tag in a trailing comment, e.g. `@<commit SHA> # v2.0.0`.
         #       https://github.com/upsidr/merge-gatekeeper/tags
         #       https://github.com/upsidr/merge-gatekeeper/branches
-        uses: upsidr/merge-gatekeeper@09af7a82c1666d0e64d2bd8c01797a0bcfd3bb5d # v1.2.1
+        uses: upsidr/merge-gatekeeper@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 ```
@@ -70,7 +100,7 @@ jobs:
 
 ### Using Importer
 
-You can also use the latest spec by using Importer to improt directly from the sample setup in this repository.
+You can also use the latest spec by using Importer to import directly from the sample setup in this repository.
 
 Create a YAML file with just a single Importer Marker:
 
@@ -80,5 +110,3 @@ Create a YAML file with just a single Importer Marker:
 ```
 
 With that, you can simply run `importer update FILENAME` to get the latest spec. You can also update the file used to specific branch or version.
-
-###

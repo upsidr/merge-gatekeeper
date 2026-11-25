@@ -61,11 +61,11 @@ jobs:
       statuses: read
     steps:
       - name: Run Merge Gatekeeper
-        # NOTE: Pinned to commit SHA for supply-chain safety. Update by replacing
-        #       both the SHA and the version tag in the trailing comment.
+        # NOTE: For supply-chain safety, pin to a commit SHA and keep the version
+        #       tag in a trailing comment, e.g. `@<commit SHA> # v2.0.0`.
         #       https://github.com/upsidr/merge-gatekeeper/tags
         #       https://github.com/upsidr/merge-gatekeeper/branches
-        uses: upsidr/merge-gatekeeper@09af7a82c1666d0e64d2bd8c01797a0bcfd3bb5d # v1.2.1
+        uses: upsidr/merge-gatekeeper@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 ```
@@ -74,6 +74,51 @@ jobs:
 <!-- == imptr: example-usage / end == -->
 
 You can find [more details here](/docs/action-usage.md).
+
+## 🏃 Runner Requirements
+
+<!-- == imptr: runner / begin from: ./docs/action-usage.md#[runner] == -->
+
+Merge Gatekeeper is a JavaScript action that runs on the `node24` runtime bundled with the GitHub Actions runner. It does not need Docker, and it does not need `actions/checkout` or `actions/setup-node`.
+
+- **We recommend `runs-on: ubuntu-latest`.** The job mostly waits for other jobs, so it needs no particular machine. Linux runners start fastest and are the cheapest GitHub-hosted runners, while macOS and Windows runners are billed at a higher rate for the same wait. Merge Gatekeeper also works on them if you have a reason to use them.
+- **Self-hosted runners** must run a version of the Actions runner that supports `node24` actions. Docker is not required, so runners inside containers or without Docker access work as well.
+- **GitHub Enterprise Server** is supported. The API endpoint is taken from `GITHUB_API_URL`, which the runner sets automatically.
+- **Network access** to the GitHub REST API (`api.github.com`, or your Enterprise Server API) is the only outbound connection Merge Gatekeeper makes.
+
+<!-- == imptr: runner / end == -->
+
+## 🆕 Upgrading from v1
+
+<!-- == imptr: upgrade / begin from: ./docs/action-usage.md#[upgrade] == -->
+
+Change `upsidr/merge-gatekeeper@v1` to `@v2`. The inputs and their defaults are unchanged.
+
+What changes in v2:
+
+- It runs as a JavaScript action, without Docker. There is no image to pull and no build step. See [why](/docs/details.md#why-is-merge-gatekeeper-a-javascript-action).
+- Commits with 100 or more commit statuses no longer cause a timeout ([#98](https://github.com/upsidr/merge-gatekeeper/issues/98)).
+- A completed check run that has no conclusion yet is treated as still running, instead of crashing.
+- GitHub Enterprise Server is supported through `GITHUB_API_URL` ([#74](https://github.com/upsidr/merge-gatekeeper/issues/74)).
+
+If you use a self-hosted runner, check that it supports `node24` actions before upgrading.
+
+<!-- == imptr: upgrade / end == -->
+
+### Why JavaScript?
+
+<!-- == imptr: why-javascript / begin from: ./docs/details.md#[why-javascript] == -->
+
+Up to v1, Merge Gatekeeper was a Docker container action written in Go. Every run pulled the `golang` image from Docker Hub and compiled the binary from the `Dockerfile` before it could start checking anything. v2 is a rewrite as a JavaScript action, for these reasons:
+
+- **The job did almost no work, but paid for a full build.** All Merge Gatekeeper does is call two GitHub REST endpoints and compare the results. Pulling a Go toolchain image and compiling on every PR added a noticeable delay to every run, for a few hundred lines of logic.
+- **Docker was the most common source of problems.** Users hit Docker Hub rate limits ([#69](https://github.com/upsidr/merge-gatekeeper/issues/69)), `docker build` failures on self-hosted runners ([#72](https://github.com/upsidr/merge-gatekeeper/issues/72)), and runners where Docker is not available at all ([#75](https://github.com/upsidr/merge-gatekeeper/issues/75)). None of these had anything to do with merge control.
+- **The runner already has everything needed.** The GitHub Actions runner ships with Node.js for JavaScript actions, and Node.js has `fetch` built in. The action therefore has no dependencies: no `node_modules`, and no bundled `dist/` file.
+- **What you read is what runs.** Because there is no build step and no third-party package, the JavaScript in this repository is exactly the code that runs in your workflow. This makes it easy to review and to pin by commit SHA, and there are no dependency updates to keep up with.
+
+Inputs and their defaults stay the same as v1, so switching from `@v1` to `@v2` needs no other change in most workflows.
+
+<!-- == imptr: why-javascript / end == -->
 
 ## 🧪 Action Inputs
 

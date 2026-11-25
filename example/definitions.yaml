@@ -18,11 +18,11 @@ jobs:
       statuses: read
     steps:
       - name: Run Merge Gatekeeper
-        # NOTE: Pinned to commit SHA for supply-chain safety. Update by replacing
-        #       both the SHA and the version tag in the trailing comment.
+        # NOTE: For supply-chain safety, pin to a commit SHA and keep the version
+        #       tag in a trailing comment, e.g. `@<commit SHA> # v2.0.0`.
         #       https://github.com/upsidr/merge-gatekeeper/tags
         #       https://github.com/upsidr/merge-gatekeeper/branches
-        uses: upsidr/merge-gatekeeper@09af7a82c1666d0e64d2bd8c01797a0bcfd3bb5d # v1.2.1
+        uses: upsidr/merge-gatekeeper@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 # == export: standard-setup / end ==
@@ -48,7 +48,7 @@ jobs:
       statuses: read
     steps:
       - name: Run Merge Gatekeeper
-        uses: upsidr/merge-gatekeeper@09af7a82c1666d0e64d2bd8c01797a0bcfd3bb5d # v1.2.1
+        uses: upsidr/merge-gatekeeper@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           self: Custom Name for Merge Gatekeeper # This must match with the Job name provided above.

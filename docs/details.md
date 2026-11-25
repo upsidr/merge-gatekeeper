@@ -44,6 +44,38 @@ We are currently considering additional validation controls such as:
 
 Merge Gatekeeper periodically validates the PR status by hitting GitHub API. The GitHub token is thus required for Merge Gatekeeper to operate, and it's often enough to have `${{ secrets.GITHUB_TOKEN }}` to be provided. The API call to list PR jobs will reveal how many jobs need to run for the given PR, check each job status, and finally return the validation status - success based on completing all the jobs, or timeout error. It is important for Merge Gatekeeper to know the Job name of itself, so that when API call returns Merge Gatekeeper as a part of the PR jobs, it would ignore its status (otherwise it will never succeed).
 
+On every check, Merge Gatekeeper reads two endpoints for the commit (`ref`):
+
+- [Commit statuses](https://docs.github.com/en/rest/commits/statuses) (`GET /repos/{owner}/{repo}/commits/{ref}/status`). When the same context has several statuses, only the latest one counts.
+- [Check runs](https://docs.github.com/en/rest/checks/runs) (`GET /repos/{owner}/{repo}/commits/{ref}/check-runs`). GitHub Actions jobs show up here. When a name was already seen, the older entries are skipped.
+
+Each job then ends up in one of these states:
+
+| Job                                                   | Treated as                    |
+| ----------------------------------------------------- | ----------------------------- |
+| Status `success`, check run `success` or `neutral`    | Success                       |
+| Check run `skipped`                                   | Not counted                   |
+| Check run not completed yet, status `pending`         | Still running                 |
+| Status `error` / `failure`, any other check run result | Failed                       |
+| Merge Gatekeeper itself (`self`), and `ignored` jobs  | Success, regardless of state  |
+
+If any job failed, Merge Gatekeeper fails straight away and lists the failed jobs. If every job succeeded, it passes. Otherwise it waits `interval` seconds and checks again, until `timeout` is reached.
+
 <!-- TODO: Add more about other validation types when we add support -->
 
 <!-- == implementation-details: support / end == -->
+
+## Why is Merge Gatekeeper a JavaScript action?
+
+<!-- == export: why-javascript / begin == -->
+
+Up to v1, Merge Gatekeeper was a Docker container action written in Go. Every run pulled the `golang` image from Docker Hub and compiled the binary from the `Dockerfile` before it could start checking anything. v2 is a rewrite as a JavaScript action, for these reasons:
+
+- **The job did almost no work, but paid for a full build.** All Merge Gatekeeper does is call two GitHub REST endpoints and compare the results. Pulling a Go toolchain image and compiling on every PR added a noticeable delay to every run, for a few hundred lines of logic.
+- **Docker was the most common source of problems.** Users hit Docker Hub rate limits ([#69](https://github.com/upsidr/merge-gatekeeper/issues/69)), `docker build` failures on self-hosted runners ([#72](https://github.com/upsidr/merge-gatekeeper/issues/72)), and runners where Docker is not available at all ([#75](https://github.com/upsidr/merge-gatekeeper/issues/75)). None of these had anything to do with merge control.
+- **The runner already has everything needed.** The GitHub Actions runner ships with Node.js for JavaScript actions, and Node.js has `fetch` built in. The action therefore has no dependencies: no `node_modules`, and no bundled `dist/` file.
+- **What you read is what runs.** Because there is no build step and no third-party package, the JavaScript in this repository is exactly the code that runs in your workflow. This makes it easy to review and to pin by commit SHA, and there are no dependency updates to keep up with.
+
+Inputs and their defaults stay the same as v1, so switching from `@v1` to `@v2` needs no other change in most workflows.
+
+<!-- == export: why-javascript / end == -->
