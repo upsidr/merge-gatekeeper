@@ -62,7 +62,7 @@ find . -name '*.md' -exec importer update {} \;   # docs sync, see below
 - Versions follow semver. `version.txt` holds the version being released.
 - After the release pull request is merged (squash merge), tag the merge commit with `vX.Y.Z`, `vX.Y` and `vX`, all lightweight tags on the same commit. Push the tags right away: the examples point at `@vX`.
 - Create a GitHub Release for `vX.Y.Z` with these sections: summary (and "Before Upgrading" for breaking changes), 🎁 Features, 🐞 Bug Fixes, 📝 Documentation, 🔬 Misc, and a Full Changelog link. Include every change since the previous release, not only the latest pull request.
-- For a stack of pull requests, merge from the bottom. After each merge, rebase the next one onto `main` and change its base to `main`; CI runs on that push.
+- A [stack of pull requests](https://docs.github.com/en/pull-requests/reference/stacked-pull-requests) merges from the bottom. GitHub rebases the remaining pull requests onto `main` and retargets them automatically.
 
 ## Layout
 
