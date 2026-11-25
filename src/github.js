@@ -6,11 +6,14 @@ const DEFAULT_API_URL = "https://api.github.com";
 
 /**
  * Retry policy for transient failures: network errors, 5xx (except 501),
- * 429, and rate-limited 403s. Waits baseDelayMs, then doubles, and honours
- * Retry-After / X-RateLimit-Reset when GitHub sends them. A wait longer than
- * maxDelayMs is not attempted, since it would only burn the timeout.
+ * 429, and rate-limited 403s. Waits baseDelayMs, then doubles. Rate-limit
+ * responses honour Retry-After / X-RateLimit-Reset, and wait one minute when
+ * GitHub sends neither. A wait longer than maxDelayMs is not attempted, since
+ * it would only burn the timeout.
+ * https://docs.github.com/en/rest/using-the-rest-api/best-practices-for-using-the-rest-api#handle-rate-limit-errors-appropriately
  */
 export const DEFAULT_RETRY = Object.freeze({ retries: 3, baseDelayMs: 1000, maxDelayMs: 60_000 });
+export const RATE_LIMIT_FALLBACK_MS = 60_000;
 
 export class HttpError extends Error {
   /**
@@ -41,7 +44,9 @@ export function retryDelay(res, attempt, retry, now = Date.now) {
     if (Number.isFinite(retryAfter) && retryAfter > 0) return retryAfter * 1000;
     const reset = Number(res.headers.get("x-ratelimit-reset"));
     if (rateLimited && Number.isFinite(reset) && reset > 0) return Math.max(0, reset * 1000 - now());
-    return backoff;
+    // No hint from GitHub: wait at least one minute, as its docs ask.
+    // Retrying sooner can extend the limit.
+    return RATE_LIMIT_FALLBACK_MS;
   }
   if (res.status >= 500 && res.status !== 501) return backoff;
   return null;

@@ -166,6 +166,17 @@ describe("retries (#64)", () => {
     }
   });
 
+  test("waits one minute on a rate limit without Retry-After or reset", async () => {
+    for (const headers of [{}, { "x-ratelimit-remaining": "0" }]) {
+      const status = Object.keys(headers).length ? 403 : 429;
+      const seq = sequence(fail(status, headers), fail(status, headers), ok);
+      const { c, sleeps, warnings } = client(seq.fetch);
+      await c.listStatuses("o", "r", "sha");
+      assert.deepEqual(sleeps, [60_000, 60_000], `status ${status}`);
+      assert.match(warnings[0], /Retrying in 60s/);
+    }
+  });
+
   test("does not wait for a rate limit reset that is too far away", async () => {
     const reset = String(Math.floor(Date.now() / 1000) + 3600);
     const seq = sequence(fail(403, { "x-ratelimit-remaining": "0", "x-ratelimit-reset": reset }), ok);
