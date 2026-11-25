@@ -72,8 +72,33 @@ export function ownerAndRepository(str) {
  * @property {string} state  one of State
  */
 
+/**
+ * @typedef {object} Workflow
+ * @property {number} id
+ * @property {string} name
+ * @property {string} path  workflow file, e.g. ".github/workflows/build.yaml"
+ */
+
+/** Slug of the GitHub App that creates check runs for Actions jobs. */
+export const ACTIONS_APP_SLUG = "github-actions";
+
 /** @param {{ id?: unknown }} run */
 const runId = (run) => (typeof run.id === "number" ? run.id : -Infinity);
+
+/**
+ * Check suites of Actions check runs that are not in `workflows` yet.
+ * @param {Array<{ app?: { slug?: string } | null, check_suite?: { id?: number } | null }>} checkRuns
+ * @param {Map<number, Workflow>} workflows
+ * @returns {number[]}
+ */
+export function unknownActionsSuites(checkRuns, workflows) {
+  const ids = new Set();
+  for (const run of checkRuns) {
+    const suite = run?.check_suite?.id;
+    if (run?.app?.slug === ACTIONS_APP_SLUG && suite != null && !workflows.has(suite)) ids.add(suite);
+  }
+  return [...ids];
+}
 
 /**
  * Builds the list of jobs to evaluate from the raw API responses.
@@ -83,20 +108,27 @@ const runId = (run) => (typeof run.id === "number" ? run.id : -Infinity);
  *   first one seen wins.
  *
  * Check runs:
- * - A job is identified by its check suite and name. Each workflow run has
- *   its own check suite, so jobs with the same name in different workflows
- *   are kept apart (#60). Re-runs stay in the same check suite, so only the
- *   latest run (highest id) of a job counts.
+ * - With `workflows` (check suite id -> workflow, from the Actions API), an
+ *   Actions job is identified by its workflow and name. Jobs with the same
+ *   name in different workflows are kept apart (#60), while new runs of the
+ *   same workflow (re-runs, or a new event on the same commit) replace older
+ *   ones. An Actions check suite that is not in `workflows` yet is kept apart
+ *   by its check suite id until it is. Check runs from other apps are
+ *   identified by app and name.
+ * - Without `workflows` (no `actions: read` permission), a job is identified
+ *   by name only, as in v2.0.0.
+ * - For each job, only the latest run (highest id) counts.
  * - A check run with the same name as a commit status context is skipped.
  * - A check run that is not completed is pending. A completed run is success
  *   for success/neutral, dropped for skipped, and error for anything else.
  *   A completed run with no conclusion yet is treated as pending.
  *
  * @param {Array<{context?: string, state?: string}>} statuses
- * @param {Array<{id?: number, name?: string, status?: string, conclusion?: string | null, check_suite?: { id?: number } | null}>} checkRuns
+ * @param {Array<{id?: number, name?: string, status?: string, conclusion?: string | null, check_suite?: { id?: number } | null, app?: { id?: number, slug?: string } | null}>} checkRuns
+ * @param {Map<number, Workflow> | null} [workflows]
  * @returns {Job[]} in discovery order
  */
-export function collectJobStates(statuses, checkRuns) {
+export function collectJobStates(statuses, checkRuns, workflows = null) {
   /** @type {Job[]} */
   const jobs = [];
   const statusContexts = new Set();
@@ -112,8 +144,24 @@ export function collectJobStates(statuses, checkRuns) {
     jobs.push({ name: s.context, label: s.context, state: s.state });
   }
 
-  // Latest check run per (check suite, name), in order of first appearance.
-  /** @type {Map<string, any>} */
+  /**
+   * Where a check run belongs, and how to show it when its name is shared.
+   * @returns {{ key: string, short: string, long: string }}
+   */
+  const ownerOf = (run) => {
+    if (!workflows) return { key: "", short: "", long: "" };
+    const suite = run.check_suite?.id;
+    const workflow = suite != null ? workflows.get(suite) : undefined;
+    if (workflow) return { key: `workflow:${workflow.id}`, short: workflow.name, long: workflow.path || workflow.name };
+    if (run.app?.slug === ACTIONS_APP_SLUG) {
+      return { key: `suite:${suite ?? ""}`, short: `check suite ${suite}`, long: `check suite ${suite}` };
+    }
+    const app = run.app?.slug ?? String(run.app?.id ?? "");
+    return { key: `app:${run.app?.id ?? ""}`, short: app, long: app };
+  };
+
+  // Latest check run per (owner, name), in order of first appearance.
+  /** @type {Map<string, { run: any, owner: ReturnType<typeof ownerOf> }>} */
   const latest = new Map();
   for (const run of checkRuns) {
     if (!run || typeof run.name !== "string" || typeof run.status !== "string") {
@@ -122,19 +170,23 @@ export function collectJobStates(statuses, checkRuns) {
       );
     }
     if (statusContexts.has(run.name)) continue;
-    const key = `${run.check_suite?.id ?? ""}\u0000${run.name}`;
+    const owner = ownerOf(run);
+    const key = `${owner.key}\u0000${run.name}`;
     const current = latest.get(key);
-    if (!current || runId(run) > runId(current)) latest.set(key, run);
+    if (!current || runId(run) > runId(current.run)) latest.set(key, { run, owner });
   }
 
-  // Names that appear in more than one check suite get the suite id in their
-  // label, so logs can tell them apart.
-  const suitesPerName = new Map();
-  for (const run of latest.values()) {
-    suitesPerName.set(run.name, (suitesPerName.get(run.name) ?? 0) + 1);
-  }
+  // A name shared by several owners gets the owner in its label, so logs can
+  // tell them apart: the workflow name, or the workflow file when two
+  // workflows also share a name.
+  const count = (values) => values.reduce((m, v) => m.set(v, (m.get(v) ?? 0) + 1), new Map());
+  const entries = [...latest.values()];
+  const perName = count(entries.map((e) => e.run.name));
+  const shortLabel = (e) => (perName.get(e.run.name) > 1 ? `${e.run.name} (${e.owner.short})` : e.run.name);
+  const perShortLabel = count(entries.map(shortLabel));
 
-  for (const run of latest.values()) {
+  for (const e of entries) {
+    const { run } = e;
     let state;
     if (run.status !== CHECK_RUN_COMPLETED || run.conclusion == null) {
       state = State.PENDING;
@@ -143,10 +195,8 @@ export function collectJobStates(statuses, checkRuns) {
     } else {
       state = SUCCESS_CONCLUSIONS.has(run.conclusion) ? State.SUCCESS : State.ERROR;
     }
-    const label =
-      suitesPerName.get(run.name) > 1 && run.check_suite?.id != null
-        ? `${run.name} (check suite ${run.check_suite.id})`
-        : run.name;
+    let label = shortLabel(e);
+    if (perShortLabel.get(label) > 1) label = `${run.name} (${e.owner.long})`;
     jobs.push({ name: run.name, label, state });
   }
 

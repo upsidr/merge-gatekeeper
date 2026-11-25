@@ -57,6 +57,7 @@ jobs:
     # Restrict permissions of the GITHUB_TOKEN.
     # Docs: https://docs.github.com/en/actions/using-jobs/assigning-permissions-to-jobs
     permissions:
+      actions: read # Tells jobs with the same name in different workflows apart.
       checks: read
       statuses: read
     steps:
@@ -87,6 +88,20 @@ Merge Gatekeeper is a JavaScript action that runs on the `node24` runtime bundle
 - **Network access** to the GitHub REST API (`api.github.com`, or your Enterprise Server API) is the only outbound connection Merge Gatekeeper makes.
 
 <!-- == imptr: runner / end == -->
+
+## 🔑 Token Permissions
+
+<!-- == imptr: permissions / begin from: ./docs/action-usage.md#[permissions] == -->
+
+| Permission       | Needed for                                                                                                                                   |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `checks: read`   | Required. Reads check runs, which include GitHub Actions jobs.                                                                               |
+| `statuses: read` | Required. Reads commit statuses.                                                                                                             |
+| `actions: read`  | Recommended. Tells jobs with the same name in different workflows apart ([#60](https://github.com/upsidr/merge-gatekeeper/issues/60)). |
+
+Without `actions: read`, a private repository cannot read which workflow a job belongs to. Merge Gatekeeper then shows a warning and treats jobs with the same name as one job, where only the latest run counts. Public repositories can read it without the permission. See [how it works](/docs/details.md#how-does-merge-gatekeeper-work) for details.
+
+<!-- == imptr: permissions / end == -->
 
 ## 🆕 Upgrading from v1
 

@@ -1,12 +1,12 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 
-import { PER_PAGE, createClient } from "../src/github.js";
+import { HttpError, PER_PAGE, createClient, isMissingPermission } from "../src/github.js";
 
 const json = (body, init = {}) => new Response(JSON.stringify(body), { status: 200, ...init });
 
 /** Fake fetch that serves paged statuses / check runs like the real API. */
-function fakeGitHub({ statuses = [], checkRuns = [] }) {
+function fakeGitHub({ statuses = [], checkRuns = [], workflowRuns = [] }) {
   const calls = [];
   const fetch = async (url, init) => {
     calls.push({ url: String(url), init });
@@ -20,6 +20,9 @@ function fakeGitHub({ statuses = [], checkRuns = [] }) {
     }
     if (u.pathname.endsWith("/check-runs")) {
       return json({ total_count: checkRuns.length, check_runs: slice(checkRuns) });
+    }
+    if (u.pathname.endsWith("/actions/runs")) {
+      return json({ total_count: workflowRuns.length, workflow_runs: slice(workflowRuns) });
     }
     return json({ message: "Not Found" }, { status: 404, statusText: "Not Found" });
   };
@@ -52,6 +55,48 @@ describe("listCheckRuns pagination", () => {
       assert.ok(gh.calls.length <= Math.ceil(n / PER_PAGE) + 1);
     });
   }
+});
+
+describe("listWorkflowRuns", () => {
+  for (const n of [0, 1, 100, 162]) {
+    test(`retrieves ${n} workflow runs and stops`, async () => {
+      const gh = fakeGitHub({ workflowRuns: Array.from({ length: n }, (_, i) => ({ id: i, check_suite_id: i, workflow_id: 1 })) });
+      const got = await createClient({ token: "t", fetch: gh.fetch }).listWorkflowRuns("o", "r", "abc123");
+      assert.equal(got.length, n);
+      assert.ok(gh.calls.length <= Math.ceil(n / PER_PAGE) + 1);
+    });
+  }
+
+  test("filters by head SHA", async () => {
+    const gh = fakeGitHub({});
+    await createClient({ token: "t", fetch: gh.fetch }).listWorkflowRuns("o", "r", "abc123");
+    assert.equal(gh.calls[0].url, "https://api.github.com/repos/o/r/actions/runs?head_sha=abc123&per_page=100&page=1");
+  });
+});
+
+describe("isMissingPermission", () => {
+  // What GitHub returned in a private repository for a token without actions: read.
+  const forbidden = (accepted) =>
+    new HttpError("GET /actions/runs failed: 403 Forbidden - Resource not accessible by integration", 403, new Headers(accepted ? { "x-accepted-github-permissions": accepted } : {}));
+
+  test("true for a 403 that names the permission", () => {
+    assert.equal(isMissingPermission(forbidden("actions=read"), "actions=read"), true);
+    assert.equal(isMissingPermission(forbidden("contents=read; actions=read,checks=read"), "actions=read"), true);
+  });
+
+  test("false otherwise", () => {
+    assert.equal(isMissingPermission(forbidden("checks=read"), "actions=read"), false);
+    assert.equal(isMissingPermission(forbidden(""), "actions=read"), false);
+    assert.equal(isMissingPermission(new HttpError("x", 404, new Headers({ "x-accepted-github-permissions": "actions=read" })), "actions=read"), false);
+    assert.equal(isMissingPermission(new Error("boom"), "actions=read"), false);
+  });
+
+  test("a 403 from the client carries the response headers", async () => {
+    const fetch = async () =>
+      json({ message: "Resource not accessible by integration" }, { status: 403, statusText: "Forbidden", headers: { "x-accepted-github-permissions": "actions=read" } });
+    const err = await createClient({ token: "t", fetch }).listWorkflowRuns("o", "r", "abc123").catch((e) => e);
+    assert.equal(isMissingPermission(err, "actions=read"), true);
+  });
 });
 
 describe("requests", () => {

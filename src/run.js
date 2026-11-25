@@ -7,8 +7,9 @@ import {
   ownerAndRepository,
   parseIgnored,
   parseSeconds,
+  unknownActionsSuites,
 } from "./core.js";
-import { createClient } from "./github.js";
+import { createClient, isMissingPermission } from "./github.js";
 
 /**
  * Reads action inputs and the runner environment into a config object.
@@ -55,6 +56,39 @@ export function readConfig(env) {
 
 class TimeoutError extends Error {}
 
+export const NO_ACTIONS_PERMISSION_WARNING =
+  "Could not read workflow runs: the token has no `actions: read` permission. " +
+  "Jobs with the same name in different workflows are checked as one job (only the latest run counts). " +
+  "Add `actions: read` to the job's permissions to check them separately.";
+
+/**
+ * Keeps a map of check suite id -> workflow, filled from the Actions API as
+ * new check suites show up. Becomes null (and stays null) when the token
+ * cannot read workflow runs; jobs are then identified by name only.
+ */
+function workflowResolver(client, config, logger) {
+  /** @type {Map<number, import("./core.js").Workflow> | null} */
+  let workflows = new Map();
+  return async (checkRuns, signal) => {
+    if (!workflows || unknownActionsSuites(checkRuns, workflows).length === 0) return workflows;
+    // The `ref` input may be a branch name; the Actions API needs the SHA.
+    const sha = checkRuns.find((r) => typeof r.head_sha === "string")?.head_sha;
+    if (!sha) return workflows;
+    try {
+      for (const run of await client.listWorkflowRuns(config.owner, config.repo, sha, signal)) {
+        if (run?.check_suite_id == null || run.workflow_id == null) continue;
+        workflows.set(run.check_suite_id, { id: run.workflow_id, name: run.name ?? "", path: run.path ?? "" });
+      }
+    } catch (err) {
+      if (!isMissingPermission(err, "actions=read")) throw err;
+      // Shown as an annotation on the run, so it is noticed without opening the log.
+      logger.log(`::warning::${NO_ACTIONS_PERMISSION_WARNING}`);
+      workflows = null;
+    }
+    return workflows;
+  };
+}
+
 /**
  * Polls GitHub until every job is done, any job fails, or the timeout passes.
  *
@@ -72,6 +106,7 @@ export async function run(config, deps = {}) {
     deps.client ?? createClient({ token: config.token, apiUrl: config.apiUrl, warn: (m) => logger.warn(m) });
   const wait = deps.sleep ?? ((ms, signal) => sleep(ms, undefined, { signal }));
   const now = deps.now ?? Date.now;
+  const resolveWorkflows = workflowResolver(client, config, logger);
 
   if (config.initialDelay > 0) {
     logger.log(`Waiting ${config.initialDelay} seconds before the first validation...`);
@@ -92,7 +127,8 @@ export async function run(config, deps = {}) {
         client.listStatuses(config.owner, config.repo, config.ref, controller.signal),
         client.listCheckRuns(config.owner, config.repo, config.ref, controller.signal),
       ]);
-      const verdict = evaluate(collectJobStates(statuses, checkRuns), {
+      const workflows = await resolveWorkflows(checkRuns, controller.signal);
+      const verdict = evaluate(collectJobStates(statuses, checkRuns, workflows), {
         self: config.self,
         ignored: config.ignored,
       });

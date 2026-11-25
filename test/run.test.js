@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 
-import { readConfig, run } from "../src/run.js";
+import { HttpError } from "../src/github.js";
+import { NO_ACTIONS_PERMISSION_WARNING, readConfig, run } from "../src/run.js";
 
 const baseEnv = {
   "INPUT_TOKEN": "t",
@@ -74,11 +75,12 @@ describe("readConfig", () => {
 });
 
 /** Fake client that returns a scripted sequence of snapshots, one per poll. */
-function scriptedClient(snapshots) {
+function scriptedClient(snapshots, { listWorkflowRuns } = {}) {
   let i = 0;
   let current;
   return {
     polls: () => i,
+    listWorkflowRuns,
     async listStatuses() {
       current = snapshots[Math.min(i, snapshots.length - 1)];
       i++;
@@ -161,5 +163,75 @@ describe("run", () => {
       },
     };
     await assert.rejects(run(config(), { client, ...fakeClock(), logger: silent }), /boom/);
+  });
+
+  describe("jobs with the same name in different workflows", () => {
+    const ACTIONS = { slug: "github-actions", id: 15368 };
+    const job = (name, conclusion, id, suite) => ({
+      id,
+      name,
+      head_sha: "abc123",
+      status: conclusion ? "completed" : "in_progress",
+      conclusion,
+      check_suite: { id: suite },
+      app: ACTIONS,
+    });
+    const logger = () => {
+      const lines = [];
+      return { lines, log: (s) => lines.push(s), warn: (s) => lines.push(s) };
+    };
+
+    test("looks up workflows once per new check suite and keeps the jobs apart", async () => {
+      const calls = [];
+      const client = scriptedClient(
+        [
+          { checkRuns: [job("build", "success", 1, 100), job("build", null, 2, 200)] },
+          { checkRuns: [job("build", "success", 1, 100), job("build", "failure", 2, 200)] },
+        ],
+        {
+          async listWorkflowRuns(owner, repo, sha) {
+            calls.push(sha);
+            return [
+              { check_suite_id: 100, workflow_id: 1, name: "CI", path: ".github/workflows/ci.yaml" },
+              { check_suite_id: 200, workflow_id: 2, name: "Deploy", path: ".github/workflows/deploy.yaml" },
+            ];
+          },
+        },
+      );
+      const res = await run(config(), { client, ...fakeClock(), logger: silent });
+      assert.deepEqual(res, { ok: false, message: "validation failed, failed jobs: build (Deploy)" });
+      // Both suites were known after the first poll.
+      assert.deepEqual(calls, ["abc123"]);
+    });
+
+    test("without actions: read, warns once and identifies jobs by name", async () => {
+      let calls = 0;
+      const client = scriptedClient(
+        [
+          { checkRuns: [job("Dependabot", "cancelled", 1, 100), job("Dependabot", null, 2, 101)] },
+          { checkRuns: [job("Dependabot", "cancelled", 1, 100), job("Dependabot", "success", 2, 101)] },
+        ],
+        {
+          async listWorkflowRuns() {
+            calls++;
+            throw new HttpError("403", 403, new Headers({ "x-accepted-github-permissions": "actions=read" }));
+          },
+        },
+      );
+      const log = logger();
+      const res = await run(config(), { client, ...fakeClock(), logger: log });
+      assert.deepEqual(res, { ok: true });
+      assert.equal(calls, 1);
+      assert.deepEqual(log.lines.filter((l) => l.includes("actions: read")), [`::warning::${NO_ACTIONS_PERMISSION_WARNING}`]);
+    });
+
+    test("other errors from the Actions API propagate", async () => {
+      const client = scriptedClient([{ checkRuns: [job("build", "success", 1, 100)] }], {
+        async listWorkflowRuns() {
+          throw new HttpError("GET /actions/runs failed: 404 Not Found", 404);
+        },
+      });
+      await assert.rejects(run(config(), { client, ...fakeClock(), logger: silent }), /404/);
+    });
   });
 });
