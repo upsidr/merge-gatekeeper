@@ -12,15 +12,15 @@ inputs:
     required: false
     default: "merge-gatekeeper"
   interval:
-    description: "set validate interval second (default 5)"
+    description: "set validate interval, in seconds or as a duration such as 30s or 1m. Must be at least 1 second (default 5)"
     required: false
     default: "5"
   timeout:
-    description: "set validate timeout second (default 600)"
+    description: "set validate timeout, in seconds or as a duration such as 10m or 1h (default 600)"
     required: false
     default: "600"
   initial-delay:
-    description: "set the delay in seconds before the first validation. Not included in timeout (default 0)"
+    description: "set the delay before the first validation, in seconds or as a duration such as 1m. Not included in timeout (default 0)"
     required: false
     default: "0"
   ignored:
@@ -28,7 +28,7 @@ inputs:
     required: false
     default: ""
   ref:
-    description: "set ref of github repository. the ref can be a SHA, a branch name, or tag name"
+    description: "set ref of github repository. the ref can be a SHA, a branch name, or tag name. Falls back to GITHUB_SHA when empty"
     required: false
     default: ${{ github.event.pull_request.head.sha }}
 runs:

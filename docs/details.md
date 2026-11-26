@@ -61,6 +61,8 @@ Each job then ends up in one of these states:
 
 If any job failed, Merge Gatekeeper fails straight away and lists the failed jobs. If every job succeeded, it passes. Otherwise it waits `interval` seconds and checks again, until `timeout` is reached.
 
+Transient GitHub API failures (network errors, 5xx responses, and rate limits) are retried up to 3 times, so a single failed request does not fail the check. Network errors and 5xx responses are retried after 1s, 2s and 4s. Rate limits wait for the time GitHub gives in `Retry-After` or `X-RateLimit-Reset`, or one minute when it gives neither.
+
 <!-- TODO: Add more about other validation types when we add support -->
 
 <!-- == implementation-details: support / end == -->

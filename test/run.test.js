@@ -43,14 +43,33 @@ describe("readConfig", () => {
     assert.equal(c.apiUrl, "https://ghes.example.com/api/v3");
   });
 
+  test("falls back to GITHUB_SHA when ref is empty (push, merge_group)", () => {
+    assert.equal(readConfig({ ...baseEnv, INPUT_REF: "", GITHUB_SHA: "abc123" }).ref, "abc123");
+    assert.equal(readConfig({ ...baseEnv, INPUT_REF: "sha", GITHUB_SHA: "abc123" }).ref, "sha");
+  });
+
+  test("accepts durations for interval, timeout and initial-delay", () => {
+    const c = readConfig({ ...baseEnv, INPUT_INTERVAL: "30s", INPUT_TIMEOUT: "25m", "INPUT_INITIAL-DELAY": "1m" });
+    assert.equal(c.interval, 30);
+    assert.equal(c.timeout, 1500);
+    assert.equal(c.initialDelay, 60);
+  });
+
   test("errors on missing ref, token, or repository", () => {
     assert.throws(() => readConfig({ ...baseEnv, INPUT_REF: "" }), /reference of repository is empty/);
     assert.throws(() => readConfig({ ...baseEnv, INPUT_TOKEN: "" }), /token is empty/);
     assert.throws(() => readConfig({ ...baseEnv, GITHUB_REPOSITORY: "" }), /owner or repository is empty/);
   });
 
+  test("errors when interval is 0, to avoid hammering the API", () => {
+    for (const v of ["0", "0s", "0m"]) {
+      assert.throws(() => readConfig({ ...baseEnv, INPUT_INTERVAL: v }), /interval" must be at least 1 second/);
+    }
+    assert.equal(readConfig({ ...baseEnv, INPUT_INTERVAL: "1" }).interval, 1);
+  });
+
   test("errors on non-numeric seconds", () => {
-    assert.throws(() => readConfig({ ...baseEnv, INPUT_TIMEOUT: "10m" }), /timeout/);
+    assert.throws(() => readConfig({ ...baseEnv, INPUT_TIMEOUT: "ten minutes" }), /timeout/);
   });
 });
 
