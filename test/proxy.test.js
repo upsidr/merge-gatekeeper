@@ -56,7 +56,9 @@ describe("fetch goes through the proxy (real Node behaviour)", { skip: typeof ht
       seen.push(req.url);
       socket.end("HTTP/1.1 502 Bad Gateway\r\n\r\n");
     });
-    await new Promise((r) => proxy.listen(0, "127.0.0.1", r));
+    await new Promise((r) => {
+      proxy.listen(0, "127.0.0.1", r);
+    });
     const proxyUrl = `http://127.0.0.1:${proxy.address().port}`;
 
     let restore;

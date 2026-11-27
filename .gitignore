@@ -1,4 +1,4 @@
-# The action has no dependencies; keep it that way.
+# Dev tools only (see package.json). The action itself has no dependencies.
 node_modules/
 
 .DS_Store

@@ -9,6 +9,10 @@
     "node": ">=24"
   },
   "scripts": {
-    "test": "node --test --test-timeout=30000"
+    "test": "node --test --test-timeout=30000",
+    "lint": "eslint --max-warnings=0 ."
+  },
+  "devDependencies": {
+    "eslint": "10.14.0"
   }
 }

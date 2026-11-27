@@ -15,6 +15,9 @@ on:
       - src/**
       - test/**
       - package.json
+      - package-lock.json
+      - .npmrc
+      - eslint.config.js
       - action.yml
       - version.txt
       - .github/workflows/build-ci.yaml
@@ -33,6 +36,13 @@ jobs:
         with:
           node-version: 24
 
-      # No dependencies to install: the action uses Node built-ins only.
+      # The action uses Node built-ins only; tests need nothing installed.
       - name: Run Tests
         run: node --test --test-timeout=30000
+
+      # Dev tools (ESLint) only, exactly as pinned in package-lock.json.
+      # .npmrc routes the fetch through Takumi Guard and disables install scripts.
+      - name: Install dev tools
+        run: npm ci
+      - name: Lint
+        run: npm run lint
