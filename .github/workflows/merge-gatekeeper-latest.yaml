@@ -8,7 +8,8 @@ on:
 
 jobs:
   merge-gatekeeper:
-    runs-on: ubuntu-latest
+    # Same runner as the recommended setup, so every PR checks that it works there.
+    runs-on: ubuntu-slim
     permissions:
       actions: read # Tells jobs with the same name in different workflows apart.
       checks: read
