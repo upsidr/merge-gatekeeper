@@ -25,7 +25,7 @@ Merge Gatekeeper is a JavaScript action that runs on the `node24` runtime bundle
 - **We recommend `runs-on: ubuntu-latest`.** The job mostly waits for other jobs, so it needs no particular machine. Linux runners start fastest and are the cheapest GitHub-hosted runners, while macOS and Windows runners are billed at a higher rate for the same wait. Merge Gatekeeper also works on them if you have a reason to use them.
 - **Self-hosted runners** must run a version of the Actions runner that supports `node24` actions. Docker is not required, so runners inside containers or without Docker access work as well.
 - **GitHub Enterprise Server** is supported. The API endpoint is taken from `GITHUB_API_URL`, which the runner sets automatically.
-- **Network access** to the GitHub REST API (`api.github.com`, or your Enterprise Server API) is the only outbound connection Merge Gatekeeper makes.
+- **Network access** to the GitHub REST API (`api.github.com`, or your Enterprise Server API) is the only outbound connection Merge Gatekeeper makes. If the runner reaches it through a proxy, `HTTPS_PROXY` / `HTTP_PROXY` and `NO_PROXY` (upper or lower case) are honoured. This needs the `node24` runtime of Actions runner with Node.js 24.14 or later; on older runners, set `NODE_USE_ENV_PROXY: 1` in the job `env`.
 
 <!-- == export: runner / end == -->
 

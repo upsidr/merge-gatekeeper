@@ -9,6 +9,6 @@
     "node": ">=24"
   },
   "scripts": {
-    "test": "node --test"
+    "test": "node --test --test-timeout=30000"
   }
 }

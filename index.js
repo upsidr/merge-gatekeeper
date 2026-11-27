@@ -1,11 +1,16 @@
 // Entry point for the Merge Gatekeeper JavaScript action (runs.using: node24).
 // No dependencies: everything uses Node built-ins.
+import { useProxyFromEnv } from "./src/proxy.js";
 import { readConfig, run } from "./src/run.js";
 
 // Workflow commands need newlines and "%" escaped to survive in a single line.
 const escapeData = (s) => String(s).replace(/%/g, "%25").replace(/\r/g, "%0D").replace(/\n/g, "%0A");
 
 try {
+  useProxyFromEnv(process.env, {
+    log: console.log,
+    warn: (m) => console.log(`::warning::${escapeData(m)}`),
+  });
   const result = await run(readConfig(process.env));
   if (!result.ok) {
     console.log(`::error::${escapeData(result.message)}`);

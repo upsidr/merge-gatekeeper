@@ -8,4 +8,4 @@ run:
 	GITHUB_REPOSITORY=$(REPO) INPUT_TOKEN=$(TOKEN) INPUT_REF=$(REF) INPUT_IGNORED="$(IGNORED)" node index.js
 
 test:
-	node --test
+	node --test --test-timeout=30000
