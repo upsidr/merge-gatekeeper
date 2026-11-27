@@ -47,7 +47,10 @@ Merge Gatekeeper periodically validates the PR status by hitting GitHub API. The
 On every check, Merge Gatekeeper reads two endpoints for the commit (`ref`):
 
 - [Commit statuses](https://docs.github.com/en/rest/commits/statuses) (`GET /repos/{owner}/{repo}/commits/{ref}/status`). When the same context has several statuses, only the latest one counts.
-- [Check runs](https://docs.github.com/en/rest/checks/runs) (`GET /repos/{owner}/{repo}/commits/{ref}/check-runs`). GitHub Actions jobs show up here. When a name was already seen, the older entries are skipped.
+- [Check runs](https://docs.github.com/en/rest/checks/runs) (`GET /repos/{owner}/{repo}/commits/{ref}/check-runs`). GitHub Actions jobs show up here. For each job, only its latest run counts.
+- [Workflow runs](https://docs.github.com/en/rest/actions/workflow-runs) (`GET /repos/{owner}/{repo}/actions/runs?head_sha=...`), to learn which workflow each Actions job belongs to. A check run only carries the job name, so this is the only way to tell jobs with the same name in different workflows apart. They are then all checked, while a new run of the same workflow (a re-run, or a new event on the same commit) replaces the older one. In the log, jobs that share a name are shown with their workflow name.
+
+  This needs the `actions: read` permission in private repositories. Without it, Merge Gatekeeper shows a warning and identifies jobs by name only: jobs with the same name count as one job, and only the latest run counts.
 
 Each job then ends up in one of these states:
 
@@ -57,7 +60,7 @@ Each job then ends up in one of these states:
 | Check run `skipped`                                   | Not counted                   |
 | Check run not completed yet, status `pending`         | Still running                 |
 | Status `error` / `failure`, any other check run result | Failed                       |
-| Merge Gatekeeper itself (`self`), and `ignored` jobs  | Success, regardless of state  |
+| Merge Gatekeeper itself (`self`), and `ignored` jobs (every job with that name) | Success, regardless of state  |
 
 If any job failed, Merge Gatekeeper fails straight away and lists the failed jobs. If every job succeeded, it passes. Otherwise it waits `interval` seconds and checks again, until `timeout` is reached.
 

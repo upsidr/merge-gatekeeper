@@ -19,11 +19,30 @@ export class HttpError extends Error {
   /**
    * @param {string} message
    * @param {number} status
+   * @param {Headers} [headers]
    */
-  constructor(message, status) {
+  constructor(message, status, headers = new Headers()) {
     super(message);
     this.status = status;
+    this.headers = headers;
   }
+}
+
+/**
+ * True when the request failed because the token lacks `permission`.
+ * GitHub answers 403 "Resource not accessible by integration" and lists the
+ * permissions the endpoint needs in X-Accepted-GitHub-Permissions.
+ * https://docs.github.com/en/rest/using-the-rest-api/troubleshooting-the-rest-api#resource-not-accessible
+ * @param {unknown} err
+ * @param {string} permission e.g. "actions=read"
+ */
+export function isMissingPermission(err, permission) {
+  if (!(err instanceof HttpError) || err.status !== 403) return false;
+  const accepted = err.headers.get("x-accepted-github-permissions") ?? "";
+  return accepted
+    .split(/[;,]/)
+    .map((p) => p.trim())
+    .includes(permission);
 }
 
 /**
@@ -90,7 +109,11 @@ export function createClient({
     } catch {
       // Body was not JSON; the status code is enough.
     }
-    return new HttpError(`GET ${path} failed: ${res.status} ${res.statusText}${message ? ` - ${message}` : ""}`, res.status);
+    return new HttpError(
+      `GET ${path} failed: ${res.status} ${res.statusText}${message ? ` - ${message}` : ""}`,
+      res.status,
+      res.headers,
+    );
   }
 
   /**
@@ -134,8 +157,8 @@ export function createClient({
   // Escape each segment of the ref but keep "/" so branch names such as
   // "feature/foo" work (same as go-github's refURLEscape).
   const escapeRef = (ref) => ref.split("/").map(encodeURIComponent).join("/");
-  const repoPath = (owner, repo, ref) =>
-    `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/commits/${escapeRef(ref)}`;
+  const repoBase = (owner, repo) => `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`;
+  const repoPath = (owner, repo, ref) => `${repoBase(owner, repo)}/commits/${escapeRef(ref)}`;
 
   return {
     /**
@@ -161,6 +184,24 @@ export function createClient({
       for (let page = 1; ; page++) {
         const body = await get(`${repoPath(owner, repo, ref)}/check-runs?per_page=${PER_PAGE}&page=${page}`, signal);
         const runs = body?.check_runs ?? [];
+        all.push(...runs);
+        if (runs.length < PER_PAGE || all.length >= (body?.total_count ?? 0)) break;
+      }
+      return all;
+    },
+
+    /**
+     * All workflow runs for a commit SHA. Needs the `actions: read`
+     * permission on private repositories.
+     */
+    async listWorkflowRuns(owner, repo, sha, signal) {
+      const all = [];
+      for (let page = 1; ; page++) {
+        const body = await get(
+          `${repoBase(owner, repo)}/actions/runs?head_sha=${encodeURIComponent(sha)}&per_page=${PER_PAGE}&page=${page}`,
+          signal,
+        );
+        const runs = body?.workflow_runs ?? [];
         all.push(...runs);
         if (runs.length < PER_PAGE || all.length >= (body?.total_count ?? 0)) break;
       }

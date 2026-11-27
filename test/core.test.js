@@ -9,11 +9,14 @@ import {
   ownerAndRepository,
   parseIgnored,
   parseSeconds,
+  unknownActionsSuites,
 } from "../src/core.js";
 
 const { SUCCESS, ERROR, FAILURE, PENDING } = State;
 const status = (context, state) => ({ context, state });
-const run = (name, status, conclusion) => ({ name, status, conclusion });
+const run = (name, status, conclusion, extra = {}) => ({ name, status, conclusion, ...extra });
+/** Job list -> [label, state] pairs, for compact assertions. */
+const pairs = (jobs) => jobs.map((j) => [j.label, j.state]);
 
 describe("parseIgnored (Go: WithIgnoredJobs)", () => {
   test("splits and trims a comma-separated list", () => {
@@ -82,7 +85,7 @@ describe("collectJobStates (Go: listGhaStatuses)", () => {
 
   test("returns job states", () => {
     const got = collectJobStates([status("job-01", SUCCESS)], checkRuns);
-    assert.deepEqual([...got], expected);
+    assert.deepEqual(pairs(got), expected);
   });
 
   test("succeeds to get job statuses even if the same job exists (first one wins)", () => {
@@ -90,22 +93,22 @@ describe("collectJobStates (Go: listGhaStatuses)", () => {
       [status("job-01", SUCCESS), status("job-01", ERROR)],
       [run("job-02", "failure"), run("job-02", "completed", "neutral"), ...checkRuns.slice(1)],
     );
-    assert.deepEqual([...got], expected);
+    assert.deepEqual(pairs(got), expected);
   });
 
   test("check run with a name already seen in statuses is skipped", () => {
     const got = collectJobStates([status("job", PENDING)], [run("job", "completed", "success")]);
-    assert.deepEqual([...got], [["job", PENDING]]);
+    assert.deepEqual(pairs(got), [["job", PENDING]]);
   });
 
   test("an older run cannot reappear after a newer skipped run", () => {
     const got = collectJobStates([], [run("job", "completed", "skipped"), run("job", "completed", "failure")]);
-    assert.deepEqual([...got], []);
+    assert.deepEqual(pairs(got), []);
   });
 
   test("completed check run with null conclusion is pending, not a crash", () => {
     const got = collectJobStates([], [run("job", "completed", null), run("job-2", "completed", undefined)]);
-    assert.deepEqual([...got], [["job", PENDING], ["job-2", PENDING]]);
+    assert.deepEqual(pairs(got), [["job", PENDING], ["job-2", PENDING]]);
   });
 
   test("handles hundreds of jobs", () => {
@@ -115,7 +118,7 @@ describe("collectJobStates (Go: listGhaStatuses)", () => {
         names.map((j) => status(j, SUCCESS)),
         names.map((j) => run(j, "completed", "neutral")),
       );
-      assert.deepEqual([...got], names.map((j) => [j, SUCCESS]));
+      assert.deepEqual(pairs(got), names.map((j) => [j, SUCCESS]));
     }
   });
 
@@ -130,8 +133,152 @@ describe("collectJobStates (Go: listGhaStatuses)", () => {
   });
 });
 
+describe("jobs with the same name in different workflows (#60)", () => {
+  const ACTIONS = { slug: "github-actions", id: 15368 };
+  /** An Actions check run in check suite `suite`. */
+  const job = (name, runStatus, conclusion, id, suite) =>
+    run(name, runStatus, conclusion, { id, check_suite: { id: suite }, app: ACTIONS });
+  const workflow = (id, name, path = `.github/workflows/${name.toLowerCase()}.yaml`) => ({ id, name, path });
+  // Check suites 100 and 101 are two runs of "CI"; 200 is a run of "Deploy".
+  const workflows = () =>
+    new Map([
+      [100, workflow(1, "CI")],
+      [101, workflow(1, "CI")],
+      [200, workflow(2, "Deploy")],
+    ]);
+  const verdict = (jobs) => evaluate(jobs, { self: "merge-gatekeeper", ignored: [] });
+
+  test("are kept apart by workflow, and labelled with the workflow name", () => {
+    const got = collectJobStates([], [
+      job("build", "completed", "success", 1, 100),
+      job("build", "completed", "failure", 2, 200),
+      job("lint", "completed", "success", 3, 100),
+    ], workflows());
+    assert.deepEqual(pairs(got), [
+      ["build (CI)", SUCCESS],
+      ["build (Deploy)", ERROR],
+      ["lint", SUCCESS],
+    ]);
+  });
+
+  test("a failure is not hidden by a success with the same name, whatever the API order", () => {
+    const success = job("Plan / Apply", "completed", "success", 10, 100);
+    const failure = job("Plan / Apply", "completed", "failure", 11, 200);
+    for (const order of [[success, failure], [failure, success]]) {
+      const v = verdict(collectJobStates([], order, workflows()));
+      assert.equal(v.failed, true);
+      assert.deepEqual(v.errJobs, ["Plan / Apply (Deploy)"]);
+    }
+  });
+
+  test("a running job is not hidden by a finished one with the same name", () => {
+    const v = verdict(
+      collectJobStates([], [job("build", "completed", "success", 1, 100), job("build", "in_progress", null, 2, 200)], workflows()),
+    );
+    assert.equal(v.succeeded, false);
+    assert.equal(v.failed, false);
+  });
+
+  test("a new run of the same workflow replaces the older run, whatever the API order", () => {
+    // e.g. concurrency: cancel-in-progress, or a new event on the same commit.
+    for (const older of ["cancelled", "failure"]) {
+      const old = job("test", "completed", older, 1, 100);
+      const latest = job("test", "completed", "success", 2, 101);
+      for (const order of [[old, latest], [latest, old]]) {
+        assert.deepEqual(pairs(collectJobStates([], order, workflows())), [["test", SUCCESS]], older);
+      }
+    }
+  });
+
+  test("within a check suite, only the latest re-run counts", () => {
+    for (const order of [
+      [job("build", "completed", "failure", 1, 100), job("build", "completed", "success", 5, 100)],
+      [job("build", "completed", "success", 5, 100), job("build", "completed", "failure", 1, 100)],
+    ]) {
+      assert.deepEqual(pairs(collectJobStates([], order, workflows())), [["build", SUCCESS]]);
+    }
+  });
+
+  test("a skipped latest run drops the job even if an older run failed", () => {
+    const got = collectJobStates([], [
+      job("build", "completed", "failure", 1, 100),
+      job("build", "completed", "skipped", 2, 101),
+    ], workflows());
+    assert.deepEqual(pairs(got), []);
+  });
+
+  test("workflows that also share a name are labelled with their file", () => {
+    const map = new Map([
+      [100, workflow(1, "CI", ".github/workflows/ci.yaml")],
+      [200, workflow(2, "CI", ".github/workflows/ci-nightly.yaml")],
+    ]);
+    const got = collectJobStates([], [job("build", "completed", "success", 1, 100), job("build", "completed", "failure", 2, 200)], map);
+    assert.deepEqual(pairs(got), [
+      ["build (.github/workflows/ci.yaml)", SUCCESS],
+      ["build (.github/workflows/ci-nightly.yaml)", ERROR],
+    ]);
+  });
+
+  test("an Actions check suite not resolved yet is kept apart by its id", () => {
+    const got = collectJobStates([], [job("build", "completed", "success", 1, 100), job("build", "completed", "failure", 2, 300)], workflows());
+    assert.deepEqual(pairs(got), [
+      ["build (CI)", SUCCESS],
+      ["build (check suite 300)", ERROR],
+    ]);
+  });
+
+  test("check runs from other apps are kept apart by app, latest run wins within an app", () => {
+    const other = (name, conclusion, id, suite) =>
+      run(name, "completed", conclusion, { id, check_suite: { id: suite }, app: { id: 7, slug: "other-ci" } });
+    const got = collectJobStates([], [
+      job("build", "completed", "success", 1, 100),
+      other("build", "failure", 2, 500),
+      other("build", "success", 3, 501),
+    ], workflows());
+    assert.deepEqual(pairs(got), [
+      ["build (CI)", SUCCESS],
+      ["build (other-ci)", SUCCESS],
+    ]);
+  });
+
+  test("without workflow info (no actions: read), jobs are identified by name, latest run wins", () => {
+    const got = collectJobStates([], [
+      job("Dependabot", "completed", "cancelled", 1, 100),
+      job("Dependabot", "completed", "success", 4, 103),
+      job("Dependabot", "completed", "success", 2, 101),
+    ]);
+    assert.deepEqual(pairs(got), [["Dependabot", SUCCESS]]);
+  });
+
+  test("ignored and self apply to every job with that name", () => {
+    const v = evaluate(
+      collectJobStates([], [
+        job("flaky", "completed", "failure", 1, 100),
+        job("flaky", "completed", "failure", 2, 200),
+        job("merge-gatekeeper", "in_progress", null, 3, 100),
+        job("merge-gatekeeper", "completed", "failure", 4, 200),
+        job("build", "completed", "success", 5, 100),
+      ], workflows()),
+      { self: "merge-gatekeeper", ignored: ["flaky"] },
+    );
+    assert.equal(v.failed, false);
+    assert.equal(v.succeeded, true);
+    assert.deepEqual(v.totalJobs, ["build"]);
+  });
+
+  test("unknownActionsSuites lists Actions check suites missing from the map", () => {
+    const runs = [
+      job("a", "completed", "success", 1, 100),
+      job("b", "completed", "success", 2, 300),
+      job("c", "completed", "success", 3, 300),
+      run("d", "completed", "success", { id: 4, check_suite: { id: 400 }, app: { id: 7, slug: "other-ci" } }),
+    ];
+    assert.deepEqual(unknownActionsSuites(runs, workflows()), [300]);
+  });
+});
+
 describe("evaluate (Go: statusValidator.Validate)", () => {
-  const jobs = (...pairs) => new Map(pairs);
+  const jobs = (...entries) => entries.map(([name, state]) => ({ name, label: name, state }));
   const verdict = (v) => ({ ignoredJobs: [], ...v });
 
   test("succeeded when there is no job", () => {
