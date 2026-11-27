@@ -63,6 +63,7 @@ find . -name '*.md' -exec importer update {} \;   # docs sync, see below
 - Versions follow semver. `version.txt` holds the version being released.
 - After the release pull request is merged (squash merge), tag the merge commit with `vX.Y.Z`, `vX.Y` and `vX`, all lightweight tags on the same commit. Push the tags right away: the examples point at `@vX`.
 - Create a GitHub Release for `vX.Y.Z` with these sections: summary (and "Before Upgrading" for breaking changes), 🎁 Features, 🐞 Bug Fixes, 📝 Documentation, 🔬 Misc, and a Full Changelog link. Include every change since the previous release, not only the latest pull request.
+- Releases are [immutable](https://docs.github.com/en/code-security/supply-chain-security/understanding-your-software-supply-chain/immutable-releases) (enabled from v2.1.0), and a tag ruleset blocks moving or deleting `v*.*.*` tags. Once a release is published, its `vX.Y.Z` tag can never point at another commit, and the version number cannot be reused even if the release is deleted. Check the tag's commit before publishing; create the release as a draft first if anything needs a second look. The title and notes stay editable. `vX.Y` and `vX` are not part of a release and move forward as usual.
 - A [stack of pull requests](https://docs.github.com/en/pull-requests/reference/stacked-pull-requests) merges from the bottom. GitHub rebases the remaining pull requests onto `main` and retargets them automatically.
 
 ## Layout
