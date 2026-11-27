@@ -26,7 +26,8 @@ Merge Gatekeeper is a **public, open source GitHub Action** (MIT). It is used by
 - Dev tools (ESLint) are `devDependencies`, pinned with an exact version and locked, including their own dependencies, in `package-lock.json`. Install them with `npm ci`. `.npmrc` sends every fetch through the Takumi Guard proxy and disables install scripts.
 - Use versions that have been public for **at least two weeks**. When adding or updating a dev tool, resolve the lockfile with `npm install --before=<date two weeks ago>` so its dependencies follow the same rule.
 - Other tools used in CI (CodeQL, importer) are pinned the same way; Go tools go through `GOPROXY=https://golang.flatt.tech`.
-- Pin every third-party action in `.github/workflows` to a **full commit SHA** with the version in a trailing comment, and give each job the minimum `permissions` it needs.
+- Every third-party action in `.github/workflows` is pinned to a commit in the [workflow lockfile](https://docs.github.com/en/actions/concepts/security/workflow-dependency-lockfiles) `.github/workflows/actions.lock`. Reference actions by a full version tag (`@v6.0.3`). After adding, removing or updating a `uses:`, run `gh actions-lock --ignore-local-actions` (extension `github/gh-actions-lock`) and commit both files. Never edit the lockfile by hand. (`--ignore-local-actions` is for the self-test step `uses: ./`, which runs the checked-out action; the action itself uses no other actions.)
+- Give each workflow the minimum `permissions` it needs, and use `persist-credentials: false` on `actions/checkout`.
 
 ## Security expectations
 
